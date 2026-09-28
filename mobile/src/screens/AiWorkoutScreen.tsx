@@ -124,7 +124,7 @@ export function AiWorkoutScreen({ navigation, route }: Props) {
   // ── Keyboard Back/Next chaining ──────────────────────────────
   // Same as AddExerciseScreen: sets -> weight -> reps, then the next row.
   const fieldKeys = (suggestions ?? []).flatMap((_, i) => [`sets-${i}`, `weight-${i}`, `reps-${i}`]);
-  const chain = useFieldChain('ai-workout', fieldKeys);
+  const chain = useFieldChain(fieldKeys);
 
   // ── Edit / remove suggestion rows ────────────────────────────────
   const updateRow = (index: number, field: SuggestionField, value: string) => {
@@ -350,16 +350,11 @@ export function AiWorkoutScreen({ navigation, route }: Props) {
             </View>
           )}
         </ScrollView>
-      </KeyboardAvoidingView>
 
-      {chain.keys.map(key => (
-        <KeyboardFieldBar
-          key={key}
-          nativeID={chain.accessoryId(key)}
-          onBack={chain.hasPrev(key) ? () => chain.prev(key) : null}
-          onNext={chain.hasNext(key) ? () => chain.next(key) : null}
-        />
-      ))}
+        {/* Sits on top of the keypad: the KeyboardAvoidingView's padding
+            lifts its last child to the keyboard's edge. */}
+        {chain.bar && <KeyboardFieldBar {...chain.bar} />}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

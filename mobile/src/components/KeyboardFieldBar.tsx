@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  InputAccessoryView, Keyboard, Platform,
+  View, Text, TouchableOpacity, StyleSheet, Keyboard, Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
@@ -11,18 +10,18 @@ import { FONT, RADIUS } from '../constants/theme';
 import { haptics } from '../utils/haptics';
 
 interface Props {
-  /** Matches the `inputAccessoryViewID` of the one input this bar serves. */
-  nativeID: string;
   /** Null greys the button out (first/last box). */
   onBack:   (() => void) | null;
   onNext:   (() => void) | null;
 }
 
 /** Back / Next / Done bar above an iOS number or decimal pad, which have no
- *  return key of their own. One bar per input (see useFieldChain for why).
- *  Android's numeric keyboard has its own next key, so this renders nothing
- *  there. */
-export function KeyboardFieldBar({ nativeID, onBack, onNext }: Props) {
+ *  return key of their own. Render it as the last child of the screen's
+ *  KeyboardAvoidingView while a chained input is focused, so it sits on top
+ *  of the keypad (see useFieldChain for why this isn't an
+ *  InputAccessoryView). Android's numeric keyboard has its own next key, so
+ *  this renders nothing there. */
+export function KeyboardFieldBar({ onBack, onNext }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -34,47 +33,45 @@ export function KeyboardFieldBar({ nativeID, onBack, onNext }: Props) {
   };
 
   return (
-    <InputAccessoryView nativeID={nativeID}>
-      <View style={styles.bar}>
-        <View style={styles.navGroup}>
-          <TouchableOpacity
-            style={[styles.navPill, !onBack && styles.disabled]}
-            onPress={onBack ? press(onBack) : undefined}
-            disabled={!onBack}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Previous field"
-            accessibilityState={{ disabled: !onBack }}
-          >
-            <Feather name="chevron-left" size={18} color={colors.primary} />
-            <Text style={styles.navText}>Back</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.navPill, !onNext && styles.disabled]}
-            onPress={onNext ? press(onNext) : undefined}
-            disabled={!onNext}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Next field"
-            accessibilityState={{ disabled: !onNext }}
-          >
-            <Text style={styles.navText}>Next</Text>
-            <Feather name="chevron-right" size={18} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
+    <View style={styles.bar}>
+      <View style={styles.navGroup}>
+        <TouchableOpacity
+          style={[styles.navPill, !onBack && styles.disabled]}
+          onPress={onBack ? press(onBack) : undefined}
+          disabled={!onBack}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Previous field"
+          accessibilityState={{ disabled: !onBack }}
+        >
+          <Feather name="chevron-left" size={18} color={colors.primary} />
+          <Text style={styles.navText}>Back</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.donePill}
-          onPress={press(() => Keyboard.dismiss())}
-          activeOpacity={0.8}
+          style={[styles.navPill, !onNext && styles.disabled]}
+          onPress={onNext ? press(onNext) : undefined}
+          disabled={!onNext}
+          activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel="Close keypad"
+          accessibilityLabel="Next field"
+          accessibilityState={{ disabled: !onNext }}
         >
-          <Text style={styles.doneText}>Done</Text>
+          <Text style={styles.navText}>Next</Text>
+          <Feather name="chevron-right" size={18} color={colors.primary} />
         </TouchableOpacity>
       </View>
-    </InputAccessoryView>
+
+      <TouchableOpacity
+        style={styles.donePill}
+        onPress={press(() => Keyboard.dismiss())}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="Close keypad"
+      >
+        <Text style={styles.doneText}>Done</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
