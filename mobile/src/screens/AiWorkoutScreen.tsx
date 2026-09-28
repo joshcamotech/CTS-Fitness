@@ -19,6 +19,7 @@ import { aiApi, catalogApi, workoutApi } from '../services/api';
 import { GradientButton } from '../components/GradientButton';
 import { KeyboardFieldBar } from '../components/KeyboardFieldBar';
 import { useFieldChain } from '../hooks/useFieldChain';
+import { useKeyboardOffset } from '../hooks/useKeyboardOffset';
 import { haptics } from '../utils/haptics';
 import { parseDateStr } from '../utils/dateUtils';
 
@@ -125,6 +126,7 @@ export function AiWorkoutScreen({ navigation, route }: Props) {
   // Same as AddExerciseScreen: sets -> weight -> reps, then the next row.
   const fieldKeys = (suggestions ?? []).flatMap((_, i) => [`sets-${i}`, `weight-${i}`, `reps-${i}`]);
   const chain = useFieldChain(fieldKeys);
+  const keyboardOffset = useKeyboardOffset();
 
   // ── Edit / remove suggestion rows ────────────────────────────────
   const updateRow = (index: number, field: SuggestionField, value: string) => {
@@ -186,11 +188,15 @@ export function AiWorkoutScreen({ navigation, route }: Props) {
 
   // ── Render ────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <SafeAreaView
+      onLayout={keyboardOffset.onLayout}
+      style={styles.safe}
+      edges={['bottom']}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={96}
+        keyboardVerticalOffset={keyboardOffset.offset}
       >
         <ScrollView
           style={styles.scroll}
