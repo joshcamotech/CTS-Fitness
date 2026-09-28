@@ -22,6 +22,7 @@ import { RestTimer } from '../components/RestTimer';
 import { WarmupSuggestion } from '../components/WarmupSuggestion';
 import { KeyboardFieldBar } from '../components/KeyboardFieldBar';
 import { useFieldChain } from '../hooks/useFieldChain';
+import { useKeyboardOffset } from '../hooks/useKeyboardOffset';
 import { haptics } from '../utils/haptics';
 import { parseDateStr } from '../utils/dateUtils';
 
@@ -181,6 +182,7 @@ export function AddExerciseScreen({ navigation, route }: Props) {
     ...row.drops.flatMap((_, di) => [`drop-weight-${i}-${di}`, `drop-reps-${i}-${di}`]),
   ]);
   const chain = useFieldChain(fieldKeys);
+  const keyboardOffset = useKeyboardOffset();
 
   // ── Set row helpers ──────────────────────────────────────────
   const updateRow = (index: number, field: 'reps' | 'weight', value: string) => {
@@ -322,11 +324,15 @@ export function AddExerciseScreen({ navigation, route }: Props) {
 
   // ── Render ────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <SafeAreaView
+      onLayout={keyboardOffset.onLayout}
+      style={styles.safe}
+      edges={['bottom']}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={96}
+        keyboardVerticalOffset={keyboardOffset.offset}
       >
         <ScrollView
           style={styles.scroll}
