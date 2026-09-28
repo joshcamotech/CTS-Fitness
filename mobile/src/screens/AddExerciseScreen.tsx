@@ -180,7 +180,7 @@ export function AddExerciseScreen({ navigation, route }: Props) {
     `weight-${i}`, `reps-${i}`,
     ...row.drops.flatMap((_, di) => [`drop-weight-${i}-${di}`, `drop-reps-${i}-${di}`]),
   ]);
-  const chain = useFieldChain('add-exercise', fieldKeys);
+  const chain = useFieldChain(fieldKeys);
 
   // ── Set row helpers ──────────────────────────────────────────
   const updateRow = (index: number, field: 'reps' | 'weight', value: string) => {
@@ -573,16 +573,11 @@ export function AddExerciseScreen({ navigation, route }: Props) {
             style={styles.saveBtn}
           />
         </ScrollView>
-      </KeyboardAvoidingView>
 
-      {chain.keys.map(key => (
-        <KeyboardFieldBar
-          key={key}
-          nativeID={chain.accessoryId(key)}
-          onBack={chain.hasPrev(key) ? () => chain.prev(key) : null}
-          onNext={chain.hasNext(key) ? () => chain.next(key) : null}
-        />
-      ))}
+        {/* Sits on top of the keypad: the KeyboardAvoidingView's padding
+            lifts its last child to the keyboard's edge. */}
+        {chain.bar && <KeyboardFieldBar {...chain.bar} />}
+      </KeyboardAvoidingView>
 
       <ExercisePickerModal
         visible={pickerVisible}
