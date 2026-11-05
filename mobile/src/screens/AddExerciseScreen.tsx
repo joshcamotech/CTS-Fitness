@@ -24,7 +24,7 @@ import { KeyboardFieldBar } from '../components/KeyboardFieldBar';
 import { useFieldChain } from '../hooks/useFieldChain';
 import { useKeyboardOffset } from '../hooks/useKeyboardOffset';
 import { haptics } from '../utils/haptics';
-import { parseDateStr } from '../utils/dateUtils';
+import { parseDateStr, getDayFull } from '../utils/dateUtils';
 
 type Nav   = NativeStackNavigationProp<RootStackParamList, 'AddExercise'>;
 type Route = RouteProp<RootStackParamList, 'AddExercise'>;
@@ -373,13 +373,31 @@ export function AddExerciseScreen({ navigation, route }: Props) {
             </TouchableOpacity>
 
             {currentPr?.best_weight ? (
-              <View style={styles.prChip}>
+              <TouchableOpacity
+                style={styles.prChip}
+                activeOpacity={0.7}
+                disabled={!currentPr.best_weight.date}
+                onPress={() => {
+                  const prDate = currentPr.best_weight?.date;
+                  if (!prDate) return;
+                  haptics.tap();
+                  // Open the day the record was set. `push` (not `navigate`)
+                  // so Back returns here, mid-entry, instead of discarding it.
+                  navigation.push('DayDetail', {
+                    date:    prDate,
+                    dayFull: getDayFull(parseDateStr(prDate)),
+                  });
+                }}
+              >
                 <Feather name="award" size={12} color={colors.success} />
                 <Text style={styles.prChipText}>
                   Current PR: {currentPr.best_weight.weight} {currentPr.best_weight.unit}
                   {currentPr.best_weight.reps != null ? ` × ${currentPr.best_weight.reps}` : ''}
                 </Text>
-              </View>
+                {currentPr.best_weight.date ? (
+                  <Feather name="chevron-right" size={12} color={colors.success} />
+                ) : null}
+              </TouchableOpacity>
             ) : null}
 
             {/* Unit toggle (KG / LBS) */}
