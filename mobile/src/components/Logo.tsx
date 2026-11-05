@@ -6,7 +6,7 @@ import { FONT, gradientPrimary } from '../constants/theme';
 import { ColorTokens } from '../theme/colorways';
 import { useTheme } from '../theme/ThemeContext';
 
-/** GYM|TRACKER two-tone brand wordmark. */
+/** CTS FITNESS two-tone brand wordmark. */
 export function Wordmark({ fontSize = 22, letterSpacing = 3 }: {
   fontSize?:      number;
   letterSpacing?: number;
@@ -15,7 +15,7 @@ export function Wordmark({ fontSize = 22, letterSpacing = 3 }: {
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <Text style={[styles.wordmark, { fontSize, letterSpacing }]}>
-      GYM<Text style={styles.wordmarkAccent}>TRACKER</Text>
+      CTS <Text style={styles.wordmarkAccent}>FITNESS</Text>
     </Text>
   );
 }
@@ -28,7 +28,7 @@ interface LogoProps {
 }
 
 /**
- * GymTracker logomark: a loaded barbell inside an open progress ring.
+ * CTS Fitness logomark: a loaded barbell inside an open progress ring.
  * The 300° ring reads as "a set nearly done"; the gap sits at the bottom
  * so the mark feels like it is lifting.
  */
