@@ -1,5 +1,5 @@
 -- ================================================================
--- Gym Tracker — Supabase (Postgres) schema
+-- CTS Fitness — Supabase (Postgres) schema
 --
 -- Run this once, in full, in the Supabase SQL editor for a fresh
 -- project. It replaces backend/sql/schema.sql (Azure SQL Server)
