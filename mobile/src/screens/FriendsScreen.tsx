@@ -275,7 +275,7 @@ export function FriendsScreen() {
             <Text style={styles.emptyText}>No users found for "{query.trim()}".</Text>
           ) : !query.trim() && sections.length === 0 ? (
             <Text style={styles.emptyText}>Search for a friend's username above to get started.</Text>
-          ) : null
+          ) : undefined
         }
       />
       {reportSheet}

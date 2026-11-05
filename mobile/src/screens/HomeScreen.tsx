@@ -98,7 +98,6 @@ export function HomeScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <StatusBar
         barStyle={effectiveMode === 'dark' ? 'light-content' : 'dark-content'}
-        backgroundColor={colors.bg}
       />
 
       {/* ── Header ── */}

@@ -22,6 +22,7 @@ export function useKeyboardOffset() {
 
   const onLayout = (e: LayoutChangeEvent) => {
     const view = e.currentTarget;
+    if (typeof view === 'number') return;
     const measure = (attempt: number) => {
       view.measureInWindow((_x, y) => {
         if (y > 0) {
