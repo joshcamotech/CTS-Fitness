@@ -15,12 +15,20 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
-// gemini-2.5-flash was retired for new API keys (404 "no longer available to
-// new users") — 3.6-flash is the current stable, free-tier flash model.
-// Google's lineup moves fast; if this starts 404ing again, check
-// https://ai.google.dev/gemini-api/docs/models for the current flash-tier ID.
-const GEMINI_MODEL = 'gemini-3.6-flash';
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
+// Google retires and renames flash-tier models quickly (2.5-flash and then
+// others have 404'd for new keys), and a single stale ID takes the whole
+// feature down with "unavailable". So try a short list in order and use the
+// first one the API accepts. Set the GEMINI_MODEL secret to pin a specific
+// model first. `gemini-flash-latest` is Google's own alias for the current
+// flash model and is the last-resort fallback.
+// Current IDs: https://ai.google.dev/gemini-api/docs/models
+const GEMINI_MODELS = [
+  Deno.env.get('GEMINI_MODEL'),
+  'gemini-3.7-flash',
+  'gemini-3.6-flash',
+  'gemini-flash-latest',
+].filter((m): m is string => !!m);
 
 // Bounds are deliberately generous but finite — they exist to stop a
 // misbehaving/adversarial model response from producing something absurd,
@@ -195,25 +203,48 @@ Deno.serve(async (req) => {
     required: ['exercises'],
   };
 
+  if (!GEMINI_API_KEY) {
+    console.error('GEMINI_API_KEY is not set: run `supabase secrets set GEMINI_API_KEY=...`');
+    return jsonResponse(
+      { error: 'The AI workout generator is not set up yet (missing API key).' },
+      503,
+    );
+  }
+
+  const requestBody = JSON.stringify({
+    contents: [{ parts: [{ text: `${systemInstruction}\n\nUser request: ${prompt}` }] }],
+    generationConfig: {
+      responseMimeType: 'application/json',
+      responseSchema,
+    },
+  });
+
   let parsed: { exercises?: unknown };
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `${systemInstruction}\n\nUser request: ${prompt}` }] }],
-          generationConfig: {
-            responseMimeType: 'application/json',
-            responseSchema,
-          },
-        }),
-      },
-    );
+    let geminiRes: Response | null = null;
+    for (const model of GEMINI_MODELS) {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          // Key in a header rather than the URL so it never lands in logs.
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+          body: requestBody,
+        },
+      );
+      if (res.ok) {
+        geminiRes = res;
+        break;
+      }
+      // Always log the provider's reason: it is the only way to tell a bad
+      // key from a retired model from a quota problem.
+      console.error(`Gemini ${model} failed`, res.status, await res.text());
+      // 404 = model retired/unknown, so try the next one. Anything else
+      // (bad key, quota, outage) would fail identically on every model.
+      if (res.status !== 404) break;
+    }
 
-    if (!geminiRes.ok) {
-      console.error('Gemini request failed', geminiRes.status, await geminiRes.text());
+    if (!geminiRes) {
       return jsonResponse(
         { error: 'The AI workout generator is unavailable right now. Try again in a moment.' },
         502,
