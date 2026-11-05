@@ -5,44 +5,80 @@ Audited against the [App Store Review Guidelines](https://developer.apple.com/ap
 as published September 2026.
 
 **If you are picking this up in a new session: read "Pick up here" directly
-below, then "Current state". Everything in Phases 0–7 is done and merged.**
+below, then "Current state". Everything in Phases 0–9 is done and merged.**
 
 ---
 
-## Pick up here — as of 2026-09-24
+## Pick up here — as of 2026-09-26
 
-**Both original blockers are resolved.** App is renamed to **CTS Fitness**,
-bundle ID is `au.com.camotechsolutions.ctsfitness`, Apple Developer is
-enrolled (Individual), and the GitHub destination is decided
-(`joshcamotech/CTS-Fitness`). Code changes for all of that landed in one PR —
-see `ACCOUNT_MIGRATION.md` for the full decision log.
-
-**What's left is entirely manual, on the account side** — repo transfer/rename,
-DNS + GitHub Pages custom domain, Supabase/Expo/Gemini transfers. None of it
-needs a coding session; `ACCOUNT_MIGRATION.md` has the ordered runbook.
+**The account migration is finished** (`ACCOUNT_MIGRATION.md`, all loose
+ends closed 2026-09-25). **All app code for v1 is merged** and live over OTA.
+What's left is manual: demo accounts, device testing, credentials, the first
+store build, and the App Store Connect listing.
 
 Do **not** change `expo.slug` or the EAS `projectId` — the slug is tied to the
 existing EAS project and the project id is what `updates.url` points at.
-Neither changed in this pass.
 
-### What can proceed in parallel, without either decision
+### Next steps, in order
 
-In rough priority order:
+Steps 1–3 need no build and can run in parallel. 4–8 are sequential.
 
-1. ~~Start the Apple Developer organization enrolment.~~ **Done 2026-09-24** —
-   enrolled as an **Individual** (CamoTech is a sole trader, not eligible for
-   Organization/D-U-N-S). See `ACCOUNT_MIGRATION.md` for why. Do not create the
-   App Store Connect app record yet; that is what locks the bundle ID.
-2. **Create and seed the demo accounts** — `APP_STORE_CONNECT.md` §2. The
-   emails and usernames do not contain the app name, so this is unaffected.
-3. **Work the device test list** in "What has not been tested". This is the
-   largest untested surface in the project and does not need a build.
-4. **Clear the 18 parked React Compiler lint findings** —
-   `cd mobile && npm run lint:compiler`. Needs a device to verify against,
-   which is why they were parked rather than fixed blind.
-5. Turn on repo **Secret scanning** and **Push protection** (Settings → Code
-   security). Free on public repos, and would catch a future accidental key
-   commit before it lands. Worth doing as part of the GitHub transfer.
+1. **Demo accounts — in progress as of 2026-09-26.** Full procedure in
+   `APP_STORE_CONNECT.md` §2. Short version:
+   - `demo@camotechsolutions.com.au` and `demo2@camotechsolutions.com.au` must
+     be able to **receive email** — sign-up requires confirming the address
+     before the first sign-in. Easiest: add both as aliases on Josh's CamoTech
+     Workspace mailbox before signing up.
+   - Sign both up **in the app** (Expo Go is fine — it uses the same
+     production Supabase project), confirm the emails, set usernames
+     `demo_lifter` / `demo_friend`.
+   - Run `supabase/scripts/seed_demo_account.sql` in the SQL editor.
+     **It has never been run** — expect to iterate; bring any error back to a
+     coding session.
+   - Sign in as `demo_lifter` and check Home, Progress, Workout, feed and
+     Friends all have data. Keep both passwords for the review notes.
+2. **Walk the device test list** in "What has not been tested" (9 steps:
+   sign-up terms gate, legal links, content filter, report, block, unblock,
+   delete account). The moderation flows are what Guideline 1.2 review
+   checks hardest, and none have been exercised end to end.
+3. **Trademark check** on "CTS Fitness" (IP Australia register) — the App
+   Store name collision check is done, this isn't.
+4. **First store build, locally** — it needs the Apple ID + 2FA to create
+   signing credentials, so CI can't do the first one. Check
+   `npx eas-cli whoami` shows `camotech-solutions` (it did on 2026-09-25), then
+   from `mobile/` on an up-to-date `main`:
+   `eas build --profile production --platform ios`. Allow ~30 min. Also run
+   `eas credentials -p ios` and add an App Store Connect API key, so later
+   builds and submits can run from the **iOS release** workflow unattended.
+5. **Check the build** — icon has no alpha channel; watch for an ITMS-91053
+   email after upload (Phase 5). Later builds: Actions → **iOS release** →
+   Run workflow (`submit: false` until you're ready).
+6. **TestFlight on a real phone** — first standalone build (not Expo Go):
+   re-check icon, splash, login and the Back/Next/Done keyboard bar.
+7. **App Store Connect listing** — create the app record (permanently locks
+   `au.com.camotechsolutions.ctsfitness`, which is final), then everything
+   in Phase 6 / `APP_STORE_CONNECT.md`.
+8. **Submit.**
+
+Optional, not blocking: clear the 18 parked React Compiler lint findings
+(`cd mobile && npm run lint:compiler`) — needs a device to verify against.
+
+### Changed since 2026-09-24
+
+- **Account migration closed out 2026-09-25:** Supabase, Expo (`camotech`
+  org, robot token for CI) done; personal logins removed; unused CamoTech AI
+  Studio keys deleted; secret scanning + push protection on. Gemini key stays on the
+  personal Google account on purpose (`ACCOUNT_MIGRATION.md` step 6).
+- **PRs #44 / #45 (2026-09-26):** set entry is weight-then-reps everywhere,
+  including AI Workout; set summaries read `60 KG × 8`, collapsed cards
+  `3 sets · 60 KG × 8`; iOS number pads get a per-field **Back / Next / Done**
+  bar (`KeyboardFieldBar` + `useFieldChain` — one bar per input because a
+  shared `inputAccessoryViewID` breaks on RN ≥ 0.76).
+- **PR #46 + migration 024 (applied 2026-09-26): cardio removed** from the
+  app, database, privacy policy, support page, App Store docs and demo seed.
+  `cardio_sessions` and its RPCs are dropped; the hero card's second stat is
+  now Sets. The privacy label wording for Health & Fitness is "App
+  Functionality (the workout history)".
 
 ---
 
@@ -58,7 +94,8 @@ In rough priority order:
 | 5 | `app.json` / `eas.json` build + submit config | done |
 | 6 | App Store Connect submission pack | drafted in `APP_STORE_CONNECT.md`; manual entry still to do |
 | 7 | CI/CD pipeline | done — merged as PR #37, green on `main` 2026-09-22 |
-| 8 | Move off personal accounts to CamoTech | **in progress** — app name, bundle ID and Apple enrolment decided/done 2026-09-24; repo transfer, DNS and other account moves still manual. Runbook in `ACCOUNT_MIGRATION.md` |
+| 8 | Move off personal accounts to CamoTech | done — closed out 2026-09-25. Log in `ACCOUNT_MIGRATION.md` |
+| 9 | Pre-submission app changes | done — weight-first set entry + keyboard bar (PRs #44, #45), cardio removed (PR #46, migration 024 applied 2026-09-26) |
 
 Decisions made 2026-09-21:
 
@@ -88,9 +125,13 @@ Decisions made 2026-09-21:
 - Moderation backend is **reports table + instant block**, no email alerts and
   no admin screen. Reports are read by querying `content_reports` in the SQL
   editor.
-- Work branches from `origin/main`. Migrations start at **023** —
-  `022_pr_source_location.sql` is unrelated work-in-progress sitting
-  uncommitted on `fix/lockfile-peer-deps`.
+- Work branches from `origin/main`. **Next free migration number is 025.**
+  022 is reserved by `022_pr_source_location.sql` on the unmerged branch
+  `feat/pr-source-location` (Current PR chip → jump to the day it was hit;
+  pushed, no PR yet). That branch needs a rebase onto `main` before it can
+  merge — it conflicts with the keyboard-chaining code in
+  `AddExerciseScreen.tsx` — and 022 must be applied to production before or
+  with it.
 
 ---
 
@@ -118,19 +159,18 @@ submission.
    `docs/*.html` legal pages and `mobile/src/constants/legal.ts` all updated
    in one PR, along with the bundle ID.
 
-**Outstanding, in the order they unblock each other:**
+**Done, as of 2026-09-26:**
 
-5. **Move off personal accounts** — GitHub, Supabase, Expo and the Gemini key
-   still sit on Josh's personal accounts. GitHub destination and the legal
-   subdomain are decided; the transfers themselves are manual. Full runbook in
+5. ~~Move off personal accounts~~ — **done**, all loose ends closed. See
    `ACCOUNT_MIGRATION.md`.
-6. **Create the demo accounts** for App Store Connect — two accounts, then
-   `supabase/scripts/seed_demo_account.sql`. See `APP_STORE_CONNECT.md` §2.
-   Not blocked by 5.
-7. **Test on a real device** — see "What has not been tested". Not blocked by
-   5.
-8. **Run the iOS release workflow**, then submit. Blocked by 5 (privacy/support
-   URLs must resolve on the new domain first).
+6. ~~Migration 024 (remove cardio)~~ — **applied 2026-09-26**.
+
+**Outstanding** — see "Next steps, in order" under "Pick up here" above:
+
+7. **Create the demo accounts** — in progress.
+8. **Test on a real device** — see "What has not been tested".
+9. **Signing credentials**, then **run the iOS release workflow**, then
+   TestFlight, the App Store Connect listing, and submit.
 
 ---
 
@@ -516,11 +556,16 @@ this machine:
 
 - **Migration 023 was applied to production without ever being executed in a
   test environment.** Its behaviour is unverified beyond static review.
-- **No app code has been run.** There is no simulator, emulator or device
-  available here. Lint and typecheck both pass and both now gate CI (Phase 7),
-  but neither runs the app: they catch types and syntax, not behaviour. There
-  are still **no tests** in this repo, which is the honest gap. Every UI claim
-  in Phases 3 and 4 rests on reading the code.
+- **Migration 024 (remove cardio) was applied 2026-09-26 after a parse check
+  only** (Postgres's own parser via `pglast`, including every function body),
+  not a test run. Worth confirming the Home trend chart and badges load.
+- **No app code has been run from a coding session.** There is no simulator,
+  emulator or device available here. Lint and typecheck both pass and both
+  gate CI (Phase 7), but neither runs the app. There are still **no tests**
+  in this repo, which is the honest gap. Josh has exercised the app on an
+  iPhone via Expo Go (the weight/reps entry and keyboard bar were checked
+  there on 2026-09-26), but the Phase 3/4 moderation UI has not been walked
+  through yet — that's the list below.
 - ~~The legal pages have not been served~~ — **served and verified 2026-09-22**,
   all three returning 200.
 - **No iOS build has been produced**, so the icon-alpha and privacy-manifest
