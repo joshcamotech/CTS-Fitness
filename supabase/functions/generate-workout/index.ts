@@ -222,6 +222,8 @@ Deno.serve(async (req) => {
   let parsed: { exercises?: unknown };
   try {
     let geminiRes: Response | null = null;
+    let lastStatus = 0;
+    let lastReason = '';
     for (const model of GEMINI_MODELS) {
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
@@ -238,15 +240,24 @@ Deno.serve(async (req) => {
       }
       // Always log the provider's reason: it is the only way to tell a bad
       // key from a retired model from a quota problem.
-      console.error(`Gemini ${model} failed`, res.status, await res.text());
-      // 404 = model retired/unknown, so try the next one. Anything else
-      // (bad key, quota, outage) would fail identically on every model.
-      if (res.status !== 404) break;
+      const errText = await res.text();
+      console.error(`Gemini ${model} failed`, res.status, errText);
+      lastStatus = res.status;
+      try {
+        lastReason = JSON.parse(errText)?.error?.status ?? '';
+      } catch { /* not JSON */ }
+      // 404 = model retired/unknown; 429/5xx = that model is rate-limited or
+      // overloaded (quotas are per model), so try the next one. Anything else
+      // (bad key, bad request) would fail identically on every model.
+      if (![404, 429, 500, 502, 503, 504].includes(res.status)) break;
     }
 
     if (!geminiRes) {
+      // The code (e.g. 403 PERMISSION_DENIED, 429 RESOURCE_EXHAUSTED) is safe
+      // to show and makes a failure diagnosable straight from the phone.
+      const detail = `Google error ${lastStatus}${lastReason ? ` ${lastReason}` : ''}`;
       return jsonResponse(
-        { error: 'The AI workout generator is unavailable right now. Try again in a moment.' },
+        { error: `The AI workout generator is unavailable right now (${detail}). Try again in a moment.` },
         502,
       );
     }
