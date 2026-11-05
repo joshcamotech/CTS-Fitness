@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Keyboard, Platform, TextInput } from 'react-native';
+import { Keyboard, Platform, type TextInputInstance } from 'react-native';
 
 // How long a blur waits for another chained box to take focus before the
 // bar hides. Tapping Next or another box blurs one input and focuses the
@@ -21,7 +21,7 @@ const BLUR_GRACE_MS = 80;
  *  inputAccessoryViewID as its previous life never re-applies it, so the
  *  bar silently vanishes after a screen has been opened once. */
 export function useFieldChain(keys: string[]) {
-  const refs = useRef<Record<string, TextInput | null>>({});
+  const refs = useRef<Record<string, TextInputInstance | null>>({});
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const focusedRef = useRef<string | null>(null);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -42,7 +42,7 @@ export function useFieldChain(keys: string[]) {
     };
   }, []);
 
-  const register = (key: string) => (el: TextInput | null) => { refs.current[key] = el; };
+  const register = (key: string) => (el: TextInputInstance | null) => { refs.current[key] = el; };
 
   const indexOf = (key: string) => keys.indexOf(key);
 
