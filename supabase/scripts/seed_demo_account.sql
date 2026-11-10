@@ -28,7 +28,9 @@
 --
 -- ── Idempotent ──────────────────────────────────────────────────
 -- Re-running wipes and rebuilds these two users' workout,
--- social and friendship rows, scoped strictly by their user ids.
+-- social and friendship rows, and any block between the two, scoped
+-- strictly by their user ids. content_reports is deliberately NOT
+-- cleared: reports are moderation records, so clear test ones by hand.
 -- Nothing outside the two demo accounts is touched. Run it again
 -- after review feedback, or to freshen the dates before a
 -- resubmission, without cleaning anything up first.
@@ -89,6 +91,12 @@ begin
   delete from public.friendships
    where (requester_id = v_main   and addressee_id = v_friend)
       or (requester_id = v_friend and addressee_id = v_main);
+  -- A block left over from testing Report/Block would hide the pair from
+  -- each other even with the friendship restored below (is_blocked()
+  -- is folded into are_friends(), migration 023).
+  delete from public.user_blocks
+   where (blocker_id = v_main   and blocked_id = v_friend)
+      or (blocker_id = v_friend and blocked_id = v_main);
 
   -- ── Profiles ──────────────────────────────────────────────────
   -- handle_new_user() already created the rows at sign-up; this
@@ -175,15 +183,18 @@ begin
     from public.exercise_defs
    where user_id is null and lower(name) = lower('Bench Press');
 
+  -- v_week 0 is the most recent session, so weight must fall as v_week
+  -- rises: the newest session is the heaviest (top set 80 kg x 4, which
+  -- is what the friend's post below shows).
   for v_week in 0 .. 2 loop
     insert into public.exercises (user_id, name, date, unit, exercise_def_id)
     values (v_friend, 'Bench Press', current_date - (v_week * 7 + 2), 'KG', v_def_id)
     returning id into v_ex_id;
 
     insert into public.exercise_sets (exercise_id, set_number, reps, weight)
-    values (v_ex_id, 1, 8, 70 + (v_week * 2.5)),
-           (v_ex_id, 2, 6, 75 + (v_week * 2.5)),
-           (v_ex_id, 3, 4, 80 + (v_week * 2.5));
+    values (v_ex_id, 1, 8, 65 + ((2 - v_week) * 2.5)),
+           (v_ex_id, 2, 6, 70 + ((2 - v_week) * 2.5)),
+           (v_ex_id, 3, 4, 75 + ((2 - v_week) * 2.5));
   end loop;
 
   -- ── Friendship, already accepted ──────────────────────────────
@@ -198,19 +209,22 @@ begin
   -- (delete) and someone else's (report / block) in one feed.
   -- Captions are deliberately bland: they pass the content filter,
   -- and a demo feed is not the place to be clever.
+  -- e1rm_kg uses the same Epley formula as share_post() (migration 013):
+  -- weight * (1 + reps / 30), 1 dp, so seeded cards match what the app
+  -- would compute for a real share of the same set.
   insert into public.posts (user_id, exercise_name, weight, reps, unit, e1rm_kg, caption, created_at)
   values
-    (v_main, 'Bench Press',  72.50, 8, 'KG',  91.83, 'Finally moved past the plateau on bench.', now() - interval '6 days'),
-    (v_main, 'Squat',        92.50, 6, 'KG', 110.00, 'Felt heavy but the depth was there.',      now() - interval '3 days');
+    (v_main, 'Bench Press',  72.50, 8, 'KG', round(72.50 * (1 + 8 / 30.0), 1), 'Finally moved past the plateau on bench.', now() - interval '6 days'),
+    (v_main, 'Squat',        92.50, 6, 'KG', round(92.50 * (1 + 6 / 30.0), 1), 'Felt heavy but the depth was there.',      now() - interval '3 days');
 
   insert into public.posts (user_id, exercise_name, weight, reps, unit, e1rm_kg, caption, created_at)
   values
-    (v_main, 'Deadlift', 112.50, 5, 'KG', 126.56, 'New best. Slow off the floor.', now() - interval '1 day')
+    (v_main, 'Deadlift', 112.50, 5, 'KG', round(112.50 * (1 + 5 / 30.0), 1), 'New best. Slow off the floor.', now() - interval '1 day')
   returning id into v_post_main;
 
   insert into public.posts (user_id, exercise_name, weight, reps, unit, e1rm_kg, caption, created_at)
   values
-    (v_friend, 'Bench Press', 80.00, 4, 'KG', 88.89, 'Chasing you on this one.', now() - interval '2 days')
+    (v_friend, 'Bench Press', 80.00, 4, 'KG', round(80.00 * (1 + 4 / 30.0), 1), 'Chasing you on this one.', now() - interval '2 days')
   returning id into v_post_fr;
 
   -- Conversation across the friendship, both directions, so the
