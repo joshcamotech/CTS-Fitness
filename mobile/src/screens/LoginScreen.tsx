@@ -97,6 +97,7 @@ export function LoginScreen() {
       const { data, error } = await supabase.auth.signUp({
         email:    email.trim(),
         password,
+        options:  { emailRedirectTo: LEGAL.confirmedUrl },
       });
       if (error) throw error;
 
@@ -104,7 +105,7 @@ export function LoginScreen() {
         // Email confirmation is required before a session is issued.
         Alert.alert(
           'Confirm your email',
-          'We sent you a confirmation link. Verify your email, then sign in.'
+          'We sent you a confirmation link. Tap it, then come back here and sign in.'
         );
         setMode('signIn');
         setPassword('');

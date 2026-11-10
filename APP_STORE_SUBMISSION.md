@@ -265,6 +265,7 @@ The privacy policy names every processor and confirms equivalent protection, as
 | Third party | What it receives | Why |
 |-------------|------------------|-----|
 | Supabase | all account and workout data | hosting, database, auth |
+| Resend | email address + account email content (confirmation, password-reset code) | custom SMTP for Supabase Auth, added 2026-11-10 |
 | Google (Gemini API) | AI prompt + 30 days of training history | AI workout generation |
 | Expo / EAS | device platform, app version, IP | over-the-air app updates |
 | Apple | purchase/download metadata | App Store distribution |

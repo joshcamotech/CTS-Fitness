@@ -16,5 +16,8 @@ export const LEGAL = {
   privacyUrl:   'https://ctsfitness.camotechsolutions.com.au/privacy.html',
   termsUrl:     'https://ctsfitness.camotechsolutions.com.au/terms.html',
   supportUrl:   'https://ctsfitness.camotechsolutions.com.au/',
+  // Where the email-confirmation link lands. Must be in Supabase's Redirect
+  // URLs allow-list (Authentication -> URL Configuration).
+  confirmedUrl: 'https://ctsfitness.camotechsolutions.com.au/confirmed.html',
   supportEmail: 'josh@camotechsolutions.com.au',
 } as const;

@@ -2,6 +2,7 @@
   "expo": {
     "name": "CTS Fitness",
     "slug": "gym-tracker",
+    "scheme": "ctsfitness",
     "version": "1.2.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
