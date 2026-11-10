@@ -15,6 +15,7 @@ import { LEGAL } from '../constants/legal';
 import { supabase } from '../lib/supabase';
 import { Logo } from '../components/Logo';
 import { GradientButton } from '../components/GradientButton';
+import { ForgotPasswordModal } from '../components/ForgotPasswordModal';
 import { haptics } from '../utils/haptics';
 
 export function LoginScreen() {
@@ -30,6 +31,8 @@ export function LoginScreen() {
   // zero-tolerance clause before they can post user-generated content.
   // Gating account creation is the one point every user passes through.
   const [agreed,          setAgreed]          = useState(false);
+
+  const [showForgot,       setShowForgot]       = useState(false);
 
   const isSignUp = mode === 'signUp';
 
@@ -171,6 +174,18 @@ export function LoginScreen() {
               onSubmitEditing={isSignUp ? undefined : handleSubmit}
             />
 
+            {!isSignUp && (
+              <TouchableOpacity
+                style={styles.forgotBtn}
+                onPress={() => { haptics.tap(); setShowForgot(true); }}
+                disabled={submitting}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+              >
+                <Text style={styles.forgotText}>Forgot password?</Text>
+              </TouchableOpacity>
+            )}
+
             {isSignUp && (
               <>
                 <Text style={formStyles.label}>Confirm Password</Text>
@@ -239,6 +254,14 @@ export function LoginScreen() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {showForgot && (
+        <ForgotPasswordModal
+          visible
+          onClose={() => setShowForgot(false)}
+          initialEmail={email}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -290,6 +313,15 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   submitBtn: {
     marginTop: 6,
+  },
+  forgotBtn: {
+    alignSelf:       'flex-end',
+    marginTop:       10,
+    paddingVertical: 4,
+  },
+  forgotText: {
+    fontSize: 13,
+    color:    colors.primary,
   },
   toggleModeBtn: {
     marginTop:  24,
