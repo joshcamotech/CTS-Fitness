@@ -101,6 +101,27 @@ steps above; it does mean a build made now includes it.
   header. A missing `GEMINI_API_KEY` returns a clear 503. Edge Functions are
   deployed by hand, not by CI — confirm the deployed version matches `main`.
 
+#### Added 2026-11-10 after device testing
+
+- **PR #57:** comment box and preset editor now measure the keyboard offset
+  (`useKeyboardOffset`) — the keypad no longer covers the comment input.
+- **Custom SMTP (dashboard config, not in the repo):** Supabase's built-in email
+  only delivers to org team members at 2/hour, so no real user could confirm an
+  email. Auth email now goes through **Resend** (`smtp.resend.com:465`, sender
+  `no-reply@camotechsolutions.com.au`, domain verified, free plan). **Confirm
+  email is ON.** Resend is named in the privacy policy (PR #58).
+- **PR #58:** the confirmation link lands on `docs/confirmed.html`; adds the
+  `ctsfitness://` scheme (native config — needs the first build to take effect).
+  Needs `https://ctsfitness.camotechsolutions.com.au/**` in Supabase → Redirect
+  URLs, or Supabase falls back to the Site URL.
+- **Forgot password (new):** "Forgot password?" on the sign-in screen opens
+  `ForgotPasswordModal`: email → 6-digit emailed code + new password →
+  `verifyOtp(recovery)` then `updateUser`, then other sessions are signed out.
+  **Requires the Supabase "Reset Password" email template to contain
+  `{{ .Token }}`** (Authentication → Emails → Templates); the default template
+  only has a link and the flow cannot work without the code. Re-check the
+  template before submitting.
+
 ### Changed since 2026-09-24
 
 - **Account migration closed out 2026-09-25:** Supabase, Expo (`camotech`
