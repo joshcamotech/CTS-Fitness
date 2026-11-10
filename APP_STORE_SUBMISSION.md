@@ -19,46 +19,58 @@ ON, forgot-password works (tested on device), demo accounts are created and
 seeded. **No iOS build exists yet** (`eas build:list` empty on 2026-11-10).
 Device tests 1–8 passed on 2026-11-10; **test 9 (delete account) and the two
 027 proofs are still to do.** A pre-flight check on 2026-11-10 found two things
-to fix before the first build (steps A1 and A2 below).
+to fix before the first build (the EAS production variables and a flat RGB
+icon); **both are fixed** (section A). The build itself is the next step.
 
 Do **not** change `expo.slug` or the EAS `projectId` — the slug is tied to the
 existing EAS project and the project id is what `updates.url` points at.
 
 ### Next steps, in order
 
-#### A. Pre-flight fixes — before the first `eas build`
+#### A. Pre-flight fixes — DONE 2026-11-10
 
-Found 2026-11-10; **neither is done yet.** Setting the EAS variables changes the
-`camotech` EAS project's configuration, so get Josh's explicit yes first.
+Both were found by a pre-flight check on 2026-11-10 and fixed the same day (PR
+touching `mobile/eas.json` and `mobile/assets/icon.png`, plus EAS project
+configuration).
 
-1. **Give the build its Supabase settings (blocker).** `eas env:list
-   --environment production` returned *No variables found*, and `eas.json` has
-   no `env` block. The app reads `EXPO_PUBLIC_SUPABASE_URL` and
+1. ~~**Give the build its Supabase settings.**~~ **Done.** `eas env:list
+   --environment production` had returned *No variables found*, and `eas.json`
+   had no `env` block. The app reads `EXPO_PUBLIC_SUPABASE_URL` and
    `EXPO_PUBLIC_SUPABASE_ANON_KEY` at build time and throws in
    `src/config/index.ts` before rendering if they are missing, so a build
-   without them crashes on launch. A cloud build cannot read the local
-   gitignored `.env`; Expo's docs say to store the values in EAS and select the
-   environment per profile. `ios-release.yml` only sets them in the runner's
-   shell, which the docs do not confirm reaches the cloud build.
-   - Create both as **plain-text** variables in the **production**
-     environment. Values are the GitHub Actions variables of the same names
-     (also in `mobile/.env`); both are public by design (the anon key is
-     protected by RLS). Command per the docs:
-     `eas env:set --name EXPO_PUBLIC_SUPABASE_URL --value <value>
-     --environment production --visibility plaintext` (newer eas-cli:
-     `eas env:create`). Do not print the values into chat or docs.
-   - Add `"environment": "production"` to the `production` profile in
-     `mobile/eas.json` (and `"preview"` to the preview profile if using it).
-     Profile names are not mapped automatically.
-   - Verify: `eas env:list --environment production` shows both.
-   - Harmless if shell variables turn out to be forwarded, and it fixes the CI
-     release workflow too.
-2. **Flatten the iOS icon.** `mobile/assets/icon.png` is 1024×1024 and fully
-   opaque (0 transparent pixels) but is saved RGBA. Apple's validator can reject
-   an icon with an alpha channel; Expo normally strips it during the build, but
-   do not rely on that. Re-save as plain RGB (pixel-identical). Leave
-   `adaptive-icon.png` and `splash-icon.png` alone — they are transparent by
-   design and Apple does not check them.
+   without them would crash on launch. A cloud build cannot read the local
+   gitignored `.env`, and `ios-release.yml` only sets them in the runner's
+   shell, which Expo's docs do not confirm reaches the cloud build.
+   - Both variables now exist as **plain-text** variables in the **production**
+     environment of `@camotech/gym-tracker`, copied from the GitHub Actions
+     variables of the same names (public by design; the anon key is protected
+     by RLS). Created with `eas env:set --name … --value … --environment
+     production --visibility plaintext` (eas-cli 24.8; `env:create` is
+     deprecated). Values were never printed or committed.
+   - `mobile/eas.json`: the `production` profile now has
+     `"environment": "production"`. Profile names are not mapped
+     automatically. The `preview` profile has no environment set and the
+     `preview` EAS environment has no variables, so a preview build would
+     still crash on launch — add the variables there first if one is ever
+     needed.
+   - **Verified:** `eas config --platform ios --profile production` reports
+     *"Environment variables … loaded from the production environment on EAS:
+     EXPO_PUBLIC_SUPABASE_ANON_KEY, EXPO_PUBLIC_SUPABASE_URL"* and resolves the
+     profile with `"environment": "production"`.
+   - If the Supabase URL or anon key ever changes, update **both** the GitHub
+     Actions variables (used by `eas-update.yml`, which bundles on the runner)
+     **and** the EAS `production` variables (used by cloud builds).
+   - `ios-release.yml` still sets the same variables in the runner shell and
+     says they are inlined at build time. That is now redundant for cloud
+     builds (EAS supplies them) and harmless; the comment is slightly
+     misleading. Not changed, because a push touching `.github/workflows`
+     needs the `workflow` token scope.
+2. ~~**Flatten the iOS icon.**~~ **Done.** `mobile/assets/icon.png` was
+   1024×1024 and fully opaque (0 transparent pixels) but saved RGBA, which
+   Apple's validator can reject. Re-saved as plain RGB (PNG colour type 2),
+   verified pixel-identical to the original. `adaptive-icon.png` and
+   `splash-icon.png` were left alone: they are transparent by design and Apple
+   does not check them. Still confirm the icon in the built app (step D2).
 
 #### B. Josh's prerequisites
 
@@ -305,8 +317,8 @@ submission.
 7. ~~Create the demo accounts~~ — **done 2026-11-10**.
 8. **Test on a real device** — tests 1–8 passed 2026-11-10; **test 9 still
    open** (see "What has not been tested").
-9. **Pre-flight fixes** (EAS production variables, flatten the icon), then
-   **signing credentials**, **the first build**, TestFlight, the App Store
+9. ~~Pre-flight fixes~~ (EAS production variables, flat RGB icon) — **done
+   2026-11-10**. Then **signing credentials**, **the first build**, TestFlight, the App Store
    Connect listing, and submit. All in "Pick up here" A–D.
 
 ---
