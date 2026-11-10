@@ -9,10 +9,14 @@ below, then "Current state". Everything in Phases 0–9 is done and merged.**
 
 ---
 
-## Pick up here — as of 2026-09-26
+## Pick up here — as of 2026-11-10
 
 **The account migration is finished** (`ACCOUNT_MIGRATION.md`, all loose
 ends closed 2026-09-25). **All app code for v1 is merged** and live over OTA.
+`main` is at Expo SDK 58 / RN 0.88, app version 1.2.0, and migrations
+**025 and 026 are applied to production** (confirmed by Josh 2026-11-10, who
+also confirmed the app works on current `main`). **No iOS build exists yet** —
+`eas build:list` for `@camotech/gym-tracker` was empty on 2026-11-10.
 What's left is manual: demo accounts, device testing, credentials, the first
 store build, and the App Store Connect listing.
 
@@ -23,7 +27,8 @@ existing EAS project and the project id is what `updates.url` points at.
 
 Steps 1–3 need no build and can run in parallel. 4–8 are sequential.
 
-1. **Demo accounts — in progress as of 2026-09-26.** Full procedure in
+1. **Demo accounts — last recorded in progress, 2026-09-26; not re-confirmed
+   since, update this line when done.** Full procedure in
    `APP_STORE_CONNECT.md` §2. Short version:
    - `demo@camotechsolutions.com.au` and `demo2@camotechsolutions.com.au` must
      be able to **receive email** — sign-up requires confirming the address
@@ -60,8 +65,41 @@ Steps 1–3 need no build and can run in parallel. 4–8 are sequential.
    in Phase 6 / `APP_STORE_CONNECT.md`.
 8. **Submit.**
 
-Optional, not blocking: clear the 18 parked React Compiler lint findings
-(`cd mobile && npm run lint:compiler`) — needs a device to verify against.
+Optional, not blocking: clear the parked React Compiler lint findings (18 as
+of 2026-09-26, not re-counted on SDK 58) with
+`cd mobile && npm run lint:compiler` — needs a device to verify against.
+
+### Changed since 2026-09-26
+
+All merged to `main` 2026-09-28 to 2026-11-05. None of it changes the manual
+steps above; it does mean a build made now includes it.
+
+- **PRs #48 / #49 (2026-09-28):** the Back / Next / Done keypad bar now
+  measures its offset (`useKeyboardOffset`) instead of hardcoding 96, and keeps
+  working on iOS.
+- **PR #50 (2026-11-05): Expo SDK 58** (`expo ^58.0.23`, RN 0.88.1). Node
+  22.13+ is the floor for local work (`README.md`). `app.json` went 1.1.0 →
+  1.2.0 and `runtimeVersion` follows `appVersion`, so 1.2.0 is a new OTA
+  runtime: installs on 1.1.x do not receive it. The OTA workflow's
+  native-change warning on that push was expected.
+- **PR #51 + migration 025 (applied):** remaining "GymTracker" strings
+  renamed to CTS Fitness, including the content-filter error shown to users
+  (`enforce_content_filter()`, same body as 023), `Logo.tsx` and `schema.sql`.
+- **PR #52 + migration 026 (applied): Current PR chip is tappable** and jumps
+  to the day and set the record was hit. `get_exercise_pr` now returns a `date`
+  per record. This supersedes the unmerged `feat/pr-source-location` branch
+  (its migration 022 was never merged). Same PR hardened the AI workout
+  generator (below).
+- **PR #53:** when the AI generator fails, the message now includes Google's
+  error code (e.g. `Google error 429 RESOURCE_EXHAUSTED`) so a failure is
+  diagnosable from the phone. Worth knowing before App Review: if a reviewer
+  hits a Gemini quota or outage, they will see that code.
+- **AI generator model handling** (`supabase/functions/generate-workout`): the
+  function now tries `GEMINI_MODEL` (optional secret), `gemini-3.7-flash`,
+  `gemini-3.6-flash`, then `gemini-flash-latest`, moving to the next model on
+  404, 429 or 5xx. The API key moved from the URL to the `x-goog-api-key`
+  header. A missing `GEMINI_API_KEY` returns a clear 503. Edge Functions are
+  deployed by hand, not by CI — confirm the deployed version matches `main`.
 
 ### Changed since 2026-09-24
 
@@ -96,6 +134,7 @@ Optional, not blocking: clear the 18 parked React Compiler lint findings
 | 7 | CI/CD pipeline | done — merged as PR #37, green on `main` 2026-09-22 |
 | 8 | Move off personal accounts to CamoTech | done — closed out 2026-09-25. Log in `ACCOUNT_MIGRATION.md` |
 | 9 | Pre-submission app changes | done — weight-first set entry + keyboard bar (PRs #44, #45), cardio removed (PR #46, migration 024 applied 2026-09-26) |
+| 10 | Post-freeze changes | done — Expo SDK 58 (#50), CTS Fitness rename + migration 025 (#51), tappable PR chip + migration 026 + AI generator hardening (#52, #53), keypad offset fix (#48, #49). 025/026 applied to production. |
 
 Decisions made 2026-09-21:
 
@@ -125,13 +164,12 @@ Decisions made 2026-09-21:
 - Moderation backend is **reports table + instant block**, no email alerts and
   no admin screen. Reports are read by querying `content_reports` in the SQL
   editor.
-- Work branches from `origin/main`. **Next free migration number is 025.**
-  022 is reserved by `022_pr_source_location.sql` on the unmerged branch
-  `feat/pr-source-location` (Current PR chip → jump to the day it was hit;
-  pushed, no PR yet). That branch needs a rebase onto `main` before it can
-  merge — it conflicts with the keyboard-chaining code in
-  `AddExerciseScreen.tsx` — and 022 must be applied to production before or
-  with it.
+- Work branches from `origin/main`. **Next free migration number is 027.**
+  022 is a permanent gap: it was reserved by the unmerged branch
+  `feat/pr-source-location`, whose feature shipped instead as migration 026
+  (PR #52). Do not merge that branch — it would collide with the shipped
+  code. `scripts/check-migrations.mjs` will keep reporting 022 as unused;
+  that is not an error.
 
 ---
 
@@ -164,6 +202,11 @@ submission.
 5. ~~Move off personal accounts~~ — **done**, all loose ends closed. See
    `ACCOUNT_MIGRATION.md`.
 6. ~~Migration 024 (remove cardio)~~ — **applied 2026-09-26**.
+
+**Done, as of 2026-11-10:**
+
+6a. ~~Migrations 025 (branding) and 026 (PR date)~~ — **applied to production**,
+    confirmed by Josh.
 
 **Outstanding** — see "Next steps, in order" under "Pick up here" above:
 
@@ -507,7 +550,7 @@ audit found.
 - [x] `scripts/check-migrations.mjs` fails on duplicate migration numbers and
       malformed names. Migrations are applied by hand in the SQL editor, so
       this is the only automated check they get. Gaps are reported, not
-      failed — 022 is legitimately reserved by an unmerged branch.
+      failed — 022 is a permanent gap (see Phase 1 decisions).
 
 Verified by reproducing the CI path locally: `rm -rf node_modules`, `npm ci`,
 `npm run lint`, `npm run typecheck`, all green, plus the migration check
@@ -533,7 +576,8 @@ literally on screen. It flagged 21 sites and every fix would have been a
 visible regression.
 
 `react-hooks/set-state-in-effect` and `react-hooks/refs` — the React Compiler
-rules Expo 57 enables — are **off**, flagging 18 real sites. Each fix is a
+rules Expo 57 enabled (and 58 keeps) — are **off**, flagging 18 real sites
+as of 2026-09-26. Each fix is a
 behavioural refactor of working screens, and this project has no tests, no
 simulator and no device in CI (see "What has not been tested"). Refactoring
 them blind immediately before an App Store submission is the wrong trade.
@@ -559,6 +603,9 @@ this machine:
 - **Migration 024 (remove cardio) was applied 2026-09-26 after a parse check
   only** (Postgres's own parser via `pglast`, including every function body),
   not a test run. Worth confirming the Home trend chart and badges load.
+- **Migrations 025 and 026** are applied, and Josh reports the app works on
+  current `main` (2026-11-10). Not tested on a standalone build, and the
+  SDK 58 upgrade has only been exercised in Expo Go so far.
 - **No app code has been run from a coding session.** There is no simulator,
   emulator or device available here. Lint and typecheck both pass and both
   gate CI (Phase 7), but neither runs the app. There are still **no tests**
@@ -605,7 +652,7 @@ order, since later steps depend on earlier ones:
 - **4.8 Login services** — email/password against the app's own Supabase auth.
   Sign in with Apple is **not** required, because the app uses no third-party or
   social login. Adding Google or Facebook sign-in later would trigger 4.8.
-- **2.5.1** — Expo SDK 57 / RN 0.86, current, public APIs only.
+- **2.5.1** — Expo SDK 58 / RN 0.88, current, public APIs only.
 - **2.5.2** — EAS Update ships JS and assets only, which is permitted; it does
   not change the app's advertised purpose.
 - **5.1.5 Location** — no location APIs used.
