@@ -290,7 +290,8 @@ Screenshot 6 is the cheapest insurance in this whole document.
 5. Watch for an ITMS-91053 email about privacy-manifest reasons. None is
    expected — the app calls no required-reason APIs directly and async-storage
    ships its own manifest — but confirm rather than assume.
-6. Fill in §3–§6 in App Store Connect.
+6. Fill in §3–§6 in App Store Connect. (The app record itself was created
+   2026-11-10: *CTS Fitness*, SKU `ctsfitness-ios`, English (Australia).)
 7. Walk the device test list in `APP_STORE_SUBMISSION.md` → "What has not been
    tested" before hitting Submit. Tests 1–8 passed 2026-11-10; test 9 (delete
    account, extended for reported content) is still open.
