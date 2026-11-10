@@ -274,7 +274,8 @@ Screenshot 6 is the cheapest insurance in this whole document.
    building — it is a native change.
 2. Create and seed the demo accounts (§2) — done 2026-11-10; re-seed right
    before Submit.
-2a. **Pre-flight (see `APP_STORE_SUBMISSION.md` → "Pick up here" A):** put
+2a. **Pre-flight — done 2026-11-10 (see `APP_STORE_SUBMISSION.md` → "Pick up
+   here" A):** put
    `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` into the EAS
    `production` environment and set `"environment": "production"` on the
    `production` build profile (a cloud build cannot read the local `.env`;
