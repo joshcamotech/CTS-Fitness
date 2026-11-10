@@ -13,6 +13,7 @@
     },
     "production": {
       "channel": "production",
+      "environment": "production",
       "autoIncrement": true,
       "ios": {
         "distribution": "store"
