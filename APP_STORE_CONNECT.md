@@ -274,15 +274,25 @@ Screenshot 6 is the cheapest insurance in this whole document.
    building — it is a native change.
 2. Create and seed the demo accounts (§2) — done 2026-11-10; re-seed right
    before Submit.
-3. Run the **iOS release** workflow with `submit: false`, confirm the build
-   succeeds, and check the icon has no alpha channel.
-4. Re-run with `submit: true`, or upload from the EAS dashboard.
+2a. **Pre-flight (see `APP_STORE_SUBMISSION.md` → "Pick up here" A):** put
+   `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` into the EAS
+   `production` environment and set `"environment": "production"` on the
+   `production` build profile (a cloud build cannot read the local `.env`;
+   without them the app crashes on launch), and flatten `icon.png` to RGB.
+3. **First build: run it locally and interactively** —
+   `eas build --profile production --platform ios` from `mobile/` — because it
+   prompts for your Apple ID + 2FA to create signing credentials, which CI
+   cannot do. Confirm the build succeeds and the icon has no alpha channel.
+   Then add an App Store Connect API key (`eas credentials -p ios`); later
+   builds can run from the **iOS release** workflow with `submit: false`.
+4. Submit with `submit: true`, or upload from the EAS dashboard.
 5. Watch for an ITMS-91053 email about privacy-manifest reasons. None is
    expected — the app calls no required-reason APIs directly and async-storage
    ships its own manifest — but confirm rather than assume.
 6. Fill in §3–§6 in App Store Connect.
 7. Walk the device test list in `APP_STORE_SUBMISSION.md` → "What has not been
-   tested" before hitting Submit. Most of it has never been run.
+   tested" before hitting Submit. Tests 1–8 passed 2026-11-10; test 9 (delete
+   account, extended for reported content) is still open.
 
 ---
 

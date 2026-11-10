@@ -24,8 +24,9 @@ and the code change is merged (PR #40). Supabase, Expo and Gemini handled
   protection on (0 open alerts). Local EAS CLI verified logged in as
   `camotech-solutions` (Owner of `camotech`) via `npx eas-cli whoami`.
 - **Next:** this doc is closed. Submission work continues in
-  `APP_STORE_SUBMISSION.md` → "Pick up here" (demo accounts and device
-  testing first, then the first `eas build --profile production --platform ios`).
+  `APP_STORE_SUBMISSION.md` → "Pick up here" (as of 2026-11-10 the demo
+  accounts are done and device tests 1–8 passed; the EAS pre-flight fixes come
+  first, then the first `eas build --profile production --platform ios`).
   That build takes ~30 min: it prompts for the Apple ID + 2FA to create
   signing credentials (these land under the `camotech` org), then builds in
   the cloud.
@@ -96,9 +97,10 @@ Where each piece lives today, and what moving it costs.
 | Gemini API key | personal Google | **stays personal, on purpose** — see step 6 | — | no |
 | Domain, support email | already CamoTech | — | — | — |
 
-**Next action: the first `eas build` from an up-to-date `main`** — now step 4 of
-the ordered list in `APP_STORE_SUBMISSION.md` → "Pick up here", after the demo
-accounts and device testing.
+**Next action: the first `eas build` from an up-to-date `main`** — step D1 of
+`APP_STORE_SUBMISSION.md` → "Pick up here", after its section A pre-flight
+fixes (the EAS `production` environment currently has **no** variables, which
+the build needs).
 
 **Code change landed 2026-09-24** — name, bundle ID, legal URLs and the
 custom-domain CNAME are all done:

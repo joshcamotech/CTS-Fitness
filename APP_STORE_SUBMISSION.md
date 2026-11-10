@@ -9,63 +9,124 @@ below, then "Current state". Everything in Phases 0–9 is done and merged.**
 
 ---
 
-## Pick up here — as of 2026-11-10
+## Pick up here — as of 2026-11-10 (end of session)
 
-**The account migration is finished** (`ACCOUNT_MIGRATION.md`, all loose
-ends closed 2026-09-25). **All app code for v1 is merged** and live over OTA.
-`main` is at Expo SDK 58 / RN 0.88, app version 1.2.0, and migrations
-**025 and 026 are applied to production** (confirmed by Josh 2026-11-10, who
-also confirmed the app works on current `main`). **No iOS build exists yet** —
-`eas build:list` for `@camotech/gym-tracker` was empty on 2026-11-10.
-What's left is manual: demo accounts, device testing, credentials, the first
-store build, and the App Store Connect listing.
+**State in one paragraph.** The account migration is finished
+(`ACCOUNT_MIGRATION.md`). All app code for v1 is merged through PR #60 and live
+over OTA: Expo SDK 58 / RN 0.88, app version 1.2.0, migrations **025, 026 and
+027 applied to production**. Auth email runs through Resend with Confirm email
+ON, forgot-password works (tested on device), demo accounts are created and
+seeded. **No iOS build exists yet** (`eas build:list` empty on 2026-11-10).
+Device tests 1–8 passed on 2026-11-10; **test 9 (delete account) and the two
+027 proofs are still to do.** A pre-flight check on 2026-11-10 found two things
+to fix before the first build (steps A1 and A2 below).
 
 Do **not** change `expo.slug` or the EAS `projectId` — the slug is tied to the
 existing EAS project and the project id is what `updates.url` points at.
 
 ### Next steps, in order
 
-Steps 1–3 need no build and can run in parallel. 4–8 are sequential.
+#### A. Pre-flight fixes — before the first `eas build`
 
-1. ~~**Demo accounts**~~ — **done 2026-11-10.** Both accounts were created in
-   the Supabase dashboard (Authentication → Users → Add user, **Auto Confirm
-   User** ticked, so no email delivery is involved), then
-   `supabase/scripts/seed_demo_account.sql` was run. Both logins work and show
-   the shared feed. Procedure in `APP_STORE_CONNECT.md` §2.
-   - **Re-run the seed immediately before submitting** (and before any
-     resubmission). Every date is relative to the run day, and the Workout
-     screen shows only the current Monday–Sunday week by default, so a stale
-     seed can open onto an empty week. `demo_friend`'s three sessions are
-     deliberately 2, 9 and 16 days before the run, so on that account the
-     history is in the *previous* weeks, not this one.
-   - Keep both passwords in a password manager for the review notes — never
-     in the repo.
-2. **Walk the device test list** in "What has not been tested" (9 steps:
-   sign-up terms gate, legal links, content filter, report, block, unblock,
-   delete account). The moderation flows are what Guideline 1.2 review
-   checks hardest, and none have been exercised end to end.
-3. **Trademark check** on "CTS Fitness" (IP Australia register) — the App
-   Store name collision check is done, this isn't.
-4. **First store build, locally** — it needs the Apple ID + 2FA to create
-   signing credentials, so CI can't do the first one. Check
-   `npx eas-cli whoami` shows `camotech-solutions` (it did on 2026-09-25), then
-   from `mobile/` on an up-to-date `main`:
-   `eas build --profile production --platform ios`. Allow ~30 min. Also run
-   `eas credentials -p ios` and add an App Store Connect API key, so later
+Found 2026-11-10; **neither is done yet.** Setting the EAS variables changes the
+`camotech` EAS project's configuration, so get Josh's explicit yes first.
+
+1. **Give the build its Supabase settings (blocker).** `eas env:list
+   --environment production` returned *No variables found*, and `eas.json` has
+   no `env` block. The app reads `EXPO_PUBLIC_SUPABASE_URL` and
+   `EXPO_PUBLIC_SUPABASE_ANON_KEY` at build time and throws in
+   `src/config/index.ts` before rendering if they are missing, so a build
+   without them crashes on launch. A cloud build cannot read the local
+   gitignored `.env`; Expo's docs say to store the values in EAS and select the
+   environment per profile. `ios-release.yml` only sets them in the runner's
+   shell, which the docs do not confirm reaches the cloud build.
+   - Create both as **plain-text** variables in the **production**
+     environment. Values are the GitHub Actions variables of the same names
+     (also in `mobile/.env`); both are public by design (the anon key is
+     protected by RLS). Command per the docs:
+     `eas env:set --name EXPO_PUBLIC_SUPABASE_URL --value <value>
+     --environment production --visibility plaintext` (newer eas-cli:
+     `eas env:create`). Do not print the values into chat or docs.
+   - Add `"environment": "production"` to the `production` profile in
+     `mobile/eas.json` (and `"preview"` to the preview profile if using it).
+     Profile names are not mapped automatically.
+   - Verify: `eas env:list --environment production` shows both.
+   - Harmless if shell variables turn out to be forwarded, and it fixes the CI
+     release workflow too.
+2. **Flatten the iOS icon.** `mobile/assets/icon.png` is 1024×1024 and fully
+   opaque (0 transparent pixels) but is saved RGBA. Apple's validator can reject
+   an icon with an alpha channel; Expo normally strips it during the build, but
+   do not rely on that. Re-save as plain RGB (pixel-identical). Leave
+   `adaptive-icon.png` and `splash-icon.png` alone — they are transparent by
+   design and Apple does not check them.
+
+#### B. Josh's prerequisites
+
+- **Node 22.13 or newer** — the PC had v22.12.0 on 2026-11-10 (tooling warns).
+- Optional: `npm install -g eas-cli` (27.5.0 was available; older works).
+- **Apple Developer account**: membership shows *active*, and **Agreements,
+  Tax, and Banking** has nothing left to accept.
+- Have the **Apple ID and 2FA device** to hand: the first build prompts for them
+  to create the distribution certificate and provisioning profile. Say yes to
+  EAS generating and managing credentials (stored under the `camotech` org).
+
+#### C. Finish testing and manual items (before Submit; some before the build)
+
+1. **Prove migration 027.** As `demo_friend`, report one of `demo_lifter`'s
+   posts and leave the report in place, then re-run
+   `supabase/scripts/seed_demo_account.sql`. It must complete, and the report
+   must survive with its target id null and snapshot intact. Then delete the
+   test report: `delete from public.content_reports where reporter_id is not
+   null;` (check first that only test reports are in the table).
+2. **Device test 9 — Delete Account, extended.** On a **throwaway** account
+   (never a demo one): have another account report one of its posts, then delete
+   the throwaway. It must succeed and land on Login; verify
+   `select count(*) from auth.users where email = '<throwaway>'` returns 0.
+3. Supabase → Authentication → Emails → Templates → **Reset Password** still
+   contains `{{ .Token }}` (forgot-password depends on it).
+4. Supabase → URL Configuration → Redirect URLs contains
+   `https://ctsfitness.camotechsolutions.com.au/**` and `ctsfitness://**`;
+   remove the stale `gymtracker://*` and the `exp://192.168.50.115…` entry.
+5. **Accept Resend's data processing agreement** (the privacy policy relies on
+   it).
+6. Confirm the deployed `generate-workout` Edge Function matches `main`
+   (CI does not deploy it).
+7. **Trademark check** on "CTS Fitness" on the IP Australia register.
+
+#### D. Build, test, list, submit
+
+1. **First store build, locally and interactively** (CI cannot do the first
+   one). Check `npx eas-cli whoami` shows `camotech-solutions`, then from
+   `mobile/` on an up-to-date `main`:
+   `eas build --profile production --platform ios`. Allow ~30 min. Afterwards
+   run `eas credentials -p ios` and add an App Store Connect API key so later
    builds and submits can run from the **iOS release** workflow unattended.
-5. **Check the build** — icon has no alpha channel; watch for an ITMS-91053
-   email after upload (Phase 5). Later builds: Actions → **iOS release** →
-   Run workflow (`submit: false` until you're ready).
-6. **TestFlight on a real phone** — first standalone build (not Expo Go):
-   re-check icon, splash, login and the Back/Next/Done keyboard bar.
-7. **App Store Connect listing** — create the app record (permanently locks
-   `au.com.camotechsolutions.ctsfitness`, which is final), then everything
-   in Phase 6 / `APP_STORE_CONNECT.md`.
-8. **Submit.**
+2. **Check the build** — an `.ipa` exists; watch for an ITMS-91053 email after
+   upload (Phase 5). Later builds: Actions → **iOS release** → Run workflow
+   (`submit: false` until ready).
+3. **TestFlight on a real phone** — first standalone build (not Expo Go):
+   re-check icon, splash, login, the sign-up confirmation email and its
+   Open CTS Fitness button (the `ctsfitness://` scheme only works in a
+   standalone build), forgot-password, and the keyboard bar.
+4. **App Store Connect listing** — create the app record (permanently locks
+   `au.com.camotechsolutions.ctsfitness`, which is final), then everything in
+   Phase 6 / `APP_STORE_CONNECT.md`.
+5. **Re-run the demo seed immediately before Submit**, and before any
+   resubmission (dates are relative to the run day). Put both demo passwords in
+   the review notes.
+6. **Submit.**
 
-Optional, not blocking: clear the parked React Compiler lint findings (18 as
-of 2026-09-26, not re-counted on SDK 58) with
-`cd mobile && npm run lint:compiler` — needs a device to verify against.
+Demo accounts (done 2026-11-10): both created in the Supabase dashboard
+(Authentication → Users → Add user, **Auto Confirm User** ticked) and seeded
+with `supabase/scripts/seed_demo_account.sql`. Procedure in
+`APP_STORE_CONNECT.md` §2. `demo_friend`'s three sessions are 2, 9 and 16 days
+before the seed run, so on that account the history is in the *previous*
+weeks, not the current one. Keep both passwords in a password manager, never
+the repo.
+
+Optional, not blocking: clear the parked React Compiler lint findings (18 on
+2026-11-10, none from new code) with `cd mobile && npm run lint:compiler` —
+needs a device to verify against.
 
 ### Changed since 2026-09-26
 
@@ -119,17 +180,16 @@ steps above; it does mean a build made now includes it.
   `{{ .Token }}`** (Authentication → Emails → Templates); the default template
   only has a link and the flow cannot work without the code. Re-check the
   template before submitting.
-- **Migration 027 — BLOCKER, found in device testing (test 5 + re-seed):**
+- **Migration 027 (PR #60) — found in device testing (test 5 + re-seed):**
   migration 023 had `content_reports` targets `ON DELETE SET NULL` *and* a
   CHECK requiring exactly one target id, so deleting reported content (or a
   reported user's account) aborted with `content_reports_target_matches_type`.
-  That breaks `delete_my_account()` (Guideline 5.1.1(v)) for anyone who has
-  ever been reported, and the demo seed's wipe step. 027 relaxes the CHECK and
-  narrows the one-report-per-reporter index. **Must be applied by hand in the
-  SQL editor before the first build.** Verify with the two queries at the foot
-  of the migration, then prove it: report a seeded post as `demo_friend`, leave
-  the report in place, re-run the seed (should succeed), and test 9 should
-  include deleting an account whose post has been reported.
+  That would have broken `delete_my_account()` (Guideline 5.1.1(v)) for anyone
+  who had ever been reported, and the demo seed's wipe step. 027 relaxes the
+  CHECK and narrows the one-report-per-reporter index. **Applied by Josh in the
+  SQL editor and its definitions verified, 2026-11-10.** Still unproven in
+  behaviour: see "Pick up here" C1 and C2 (seed re-run with a report in place,
+  and deleting an account whose post has been reported).
 
 ### Changed since 2026-09-24
 
@@ -164,7 +224,7 @@ steps above; it does mean a build made now includes it.
 | 7 | CI/CD pipeline | done — merged as PR #37, green on `main` 2026-09-22 |
 | 8 | Move off personal accounts to CamoTech | done — closed out 2026-09-25. Log in `ACCOUNT_MIGRATION.md` |
 | 9 | Pre-submission app changes | done — weight-first set entry + keyboard bar (PRs #44, #45), cardio removed (PR #46, migration 024 applied 2026-09-26) |
-| 10 | Post-freeze changes | done — Expo SDK 58 (#50), CTS Fitness rename + migration 025 (#51), tappable PR chip + migration 026 + AI generator hardening (#52, #53), keypad offset fix (#48, #49). 025/026 applied to production. |
+| 10 | Post-freeze changes | done — Expo SDK 58 (#50), CTS Fitness rename + migration 025 (#51), tappable PR chip + migration 026 + AI generator hardening (#52, #53), keypad offset fix (#48, #49, #57). 025/026 applied to production. Also: Resend SMTP + Confirm email on + confirmation redirect page (#58), forgot-password (#59), migration 027 `content_reports` delete fix (#60, applied). |
 
 Decisions made 2026-09-21:
 
@@ -240,12 +300,14 @@ submission.
 
 **Outstanding** — see "Next steps, in order" under "Pick up here" above:
 
-6b. **Apply migration 027** (`content_reports` delete fix) in the SQL editor —
-    required, see "Added 2026-11-10 after device testing".
-7. ~~Create the demo accounts~~ — **done 2026-11-10** (see "Next steps" 1).
-8. **Test on a real device** — see "What has not been tested".
-9. **Signing credentials**, then **run the iOS release workflow**, then
-   TestFlight, the App Store Connect listing, and submit.
+6b. ~~Apply migration 027~~ (`content_reports` delete fix) — **applied and
+    verified 2026-11-10**; behaviour proofs still open (Pick up here C1, C2).
+7. ~~Create the demo accounts~~ — **done 2026-11-10**.
+8. **Test on a real device** — tests 1–8 passed 2026-11-10; **test 9 still
+   open** (see "What has not been tested").
+9. **Pre-flight fixes** (EAS production variables, flatten the icon), then
+   **signing credentials**, **the first build**, TestFlight, the App Store
+   Connect listing, and submit. All in "Pick up here" A–D.
 
 ---
 
@@ -644,8 +706,8 @@ this machine:
   gate CI (Phase 7), but neither runs the app. There are still **no tests**
   in this repo, which is the honest gap. Josh has exercised the app on an
   iPhone via Expo Go (the weight/reps entry and keyboard bar were checked
-  there on 2026-09-26), but the Phase 3/4 moderation UI has not been walked
-  through yet — that's the list below.
+  there on 2026-09-26). The Phase 3/4 moderation UI was walked through on
+  2026-11-10: tests 1–8 below passed, **test 9 has not been run**.
 - ~~The legal pages have not been served~~ — **served and verified 2026-09-22**,
   all three returning 200.
 - **No iOS build has been produced**, so the icon-alpha and privacy-manifest
@@ -656,8 +718,12 @@ this machine:
   shared feed shows on both. Not re-verified: the Progress, Home trend and
   PR-chip screens on `demo_lifter`, and the moderation flows (device list below).
 
-Worth walking through on a real device once the migration is applied, in this
-order, since later steps depend on earlier ones:
+Device test list, in this order since later steps depend on earlier ones.
+**Results 2026-11-10 (Expo Go, real iPhone): 1–8 PASSED; 9 NOT RUN.**
+Note the order for 7 and 8: do **8 before 7**, because the block must still be
+active to prove a blocked user cannot find you. Use `demo@` / `demo2@` for 5–8
+(re-run the seed afterwards to restore the friendship and clear any block, after
+deleting test reports) and a **throwaway** account for 9, never a demo one:
 
 1. Sign up — Sign Up should stay disabled until the terms box is ticked, and
    both links should open.
@@ -673,7 +739,9 @@ order, since later steps depend on earlier ones:
    **not** as a friend.
 8. Confirm a blocked user cannot find you in search or send you a friend request.
 9. Settings → Delete Account on a throwaway account — verify it lands back on
-   Login and that the rows really are gone across every table.
+   Login and that the rows really are gone across every table. **Extended
+   (post-027):** first have another account report one of the throwaway's
+   posts, then delete it. Before migration 027 this failed.
 
 ---
 
