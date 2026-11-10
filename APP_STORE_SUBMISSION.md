@@ -12,15 +12,36 @@ below, then "Current state". Everything in Phases 0–9 is done and merged.**
 ## Pick up here — as of 2026-11-10 (end of session)
 
 **State in one paragraph.** The account migration is finished
-(`ACCOUNT_MIGRATION.md`). All app code for v1 is merged through PR #60 and live
-over OTA: Expo SDK 58 / RN 0.88, app version 1.2.0, migrations **025, 026 and
-027 applied to production**. Auth email runs through Resend with Confirm email
-ON, forgot-password works (tested on device), demo accounts are created and
-seeded. **The first iOS build finished on 2026-11-10** (EAS build `ed2ac72f-ae8a-4269-b7dc-aef36d0a63d6`: production profile, store distribution, SDK 58, version 1.2.0, build number 2, runtime 1.2.0, built from `main` at `e1cd56b`; ~6 min). It is **not yet submitted to TestFlight** and has not been installed on a phone.
-Device tests 1–8 passed on 2026-11-10; **test 9 (delete account) and the two
-027 proofs are still to do.** A pre-flight check on 2026-11-10 found two things
-to fix before the first build (the EAS production variables and a flat RGB
-icon); **both are fixed** (section A), and the build in D1 is done. Next is D2 onward: App Store Connect API key, the app record, TestFlight.
+(`ACCOUNT_MIGRATION.md`). All app code for v1 is merged and live over OTA: Expo
+SDK 58 / RN 0.88, app version 1.2.0, migrations **025, 026 and 027 applied to
+production**. Auth email runs through Resend with Confirm email ON,
+forgot-password works (tested on device), demo accounts are created and
+seeded, and the EAS pre-flight fixes are done. **The first iOS build finished
+on 2026-11-10** (EAS build `ed2ac72f-ae8a-4269-b7dc-aef36d0a63d6`: production
+profile, store distribution, SDK 58, version 1.2.0, build number 2, runtime
+1.2.0, from `main` at `e1cd56b`). **The App Store Connect app record was
+created on 2026-11-10**: name *CTS Fitness*, iOS, primary language English
+(Australia), SKU `ctsfitness-ios`, bundle ID
+`au.com.camotechsolutions.ctsfitness` (now permanently locked), Full Access.
+The build is **not yet submitted to TestFlight** and has not been run on a
+phone. Device tests 1–8 passed; **test 9 and the two 027 proofs are still to
+do.** Work was paused here on 2026-11-10.
+
+### Resume here — first action
+
+From `D:\Gym App\mobile` in PowerShell. Josh's PowerShell is the older Windows
+PowerShell 5.1, which rejects `&&`: **run one command per line.**
+
+```powershell
+git checkout main
+git pull
+npx eas-cli whoami
+npx eas-cli submit --platform ios --profile production --latest
+```
+
+`whoami` must print `camotech-solutions`. `submit` asks for the Apple ID, its
+password and 2FA (Josh enters these; never paste them into chat) and which app
+record to use (*CTS Fitness*). Then follow D2 below.
 
 Do **not** change `expo.slug` or the EAS `projectId` — the slug is tied to the
 existing EAS project and the project id is what `updates.url` points at.
@@ -74,7 +95,7 @@ configuration).
 
 #### B. Josh's prerequisites
 
-- **Node 22.13 or newer** — the PC had v22.12.0 on 2026-11-10 (tooling warns).
+- ~~**Node 22.13 or newer**~~ — updated on 2026-11-10 before the first build.
 - Optional: `npm install -g eas-cli` (27.5.0 was available; older works).
 - **Apple Developer account**: membership shows *active*, and **Agreements,
   Tax, and Banking** has nothing left to accept.
@@ -107,39 +128,45 @@ configuration).
 
 #### D. Build, test, list, submit
 
-1. ~~**First store build, locally and interactively**~~ **Done 2026-11-10** (build
-   `ed2ac72f-ae8a-4269-b7dc-aef36d0a63d6`, version 1.2.0, build number 2,
-   from `e1cd56b`; Apple Distribution certificate and provisioning profile
-   created by EAS under the Individual team, **both expire 10 Nov 2027 — renew
-   before then**; credentials are stored under the `camotech` org). Original
-   notes: (CI cannot do the first
-   one). Check `npx eas-cli whoami` shows `camotech-solutions`, then from
-   `mobile/` on an up-to-date `main`:
-   `eas build --profile production --platform ios`. Allow ~30 min. Afterwards
-   run `eas credentials -p ios` and add an App Store Connect API key so later
-   builds and submits can run from the **iOS release** workflow unattended.
-   **The API-key part is NOT done yet** — see 1b.
-1b. **Add an App Store Connect API key (not done).** In App Store Connect →
-   Users and Access → Integrations → App Store Connect API, create a key (role
-   App Manager or Admin) and download the `.p8` once; then
+1. ~~**First store build, locally and interactively**~~ **Done 2026-11-10**
+   (build `ed2ac72f-ae8a-4269-b7dc-aef36d0a63d6`, version 1.2.0, build number
+   2, from `e1cd56b`, ~6 min). EAS created the Apple Distribution certificate
+   and provisioning profile under the Individual team; **both expire
+   10 Nov 2027 — renew before then.** Credentials live under the `camotech`
+   org.
+1a. ~~**Create the App Store Connect app record**~~ **Done 2026-11-10** (see the
+   state paragraph for the exact values). The bundle ID is now locked; the app
+   name and everything in the listing can still be edited.
+1b. **Add an App Store Connect API key (not done, optional now).** In App Store
+   Connect → Users and Access → Integrations → App Store Connect API, create a
+   key (role App Manager or Admin) and download the `.p8` once; then
    `npx eas-cli credentials -p ios` to upload it (needs the Key ID, Issuer ID
    and the `.p8`). Keep the `.p8` in a password manager — Apple only offers it
-   once. Optional for a first manual `eas submit` (it can log in with the Apple
-   ID instead), needed for unattended submits from the workflow.
-2. **Check the build** — an `.ipa` exists; watch for an ITMS-91053 email after
-   upload (Phase 5). Later builds: Actions → **iOS release** → Run workflow
-   (`submit: false` until ready).
-3. **TestFlight on a real phone** — first standalone build (not Expo Go):
-   re-check icon, splash, login, the sign-up confirmation email and its
-   Open CTS Fitness button (the `ctsfitness://` scheme only works in a
-   standalone build), forgot-password, and the keyboard bar.
-4. **App Store Connect listing** — create the app record (permanently locks
-   `au.com.camotechsolutions.ctsfitness`, which is final), then everything in
-   Phase 6 / `APP_STORE_CONNECT.md`.
-5. **Re-run the demo seed immediately before Submit**, and before any
-   resubmission (dates are relative to the run day). Put both demo passwords in
-   the review notes.
-6. **Submit.**
+   once. A first manual `eas submit` can log in with the Apple ID instead; the
+   key is for unattended submits from the **iOS release** workflow.
+2. **Submit the build to TestFlight — NEXT** (command under "Resume here").
+   Then wait for Apple to process it (usually 10–30 min). Watch the account
+   email for an **ITMS-91053** note about privacy-manifest reasons (none is
+   expected) and for any icon complaint — if either arrives, send it to a
+   coding session before going further. Later builds: Actions → **iOS release**
+   → Run workflow (`submit: false` until ready).
+3. **TestFlight on a real phone** — install the TestFlight app, accept the
+   build as an internal tester (Josh, as Account Holder, needs no beta review).
+   This is the first standalone build (not Expo Go), so re-check: icon and
+   splash, sign-in and sign-up, the confirmation email and its Open CTS
+   Fitness button (the `ctsfitness://` scheme only works in a standalone
+   build), forgot-password, the keyboard bar and comment box, and a normal
+   workout end to end. Confirm the app launches at all — that proves the EAS
+   production variables reached the build.
+4. **App Store Connect listing content** — the record exists; fill in
+   everything in Phase 6 / `APP_STORE_CONNECT.md` (description, keywords,
+   screenshots, support and privacy URLs, privacy nutrition label, age rating,
+   category, review notes with both demo credentials).
+5. **Finish the open items in section C** (027 proofs, test 9, template,
+   redirect URLs, Resend agreement, Edge Function check, trademark).
+6. **Re-run the demo seed immediately before Submit**, and before any
+   resubmission (dates are relative to the run day).
+7. **Submit for review.**
 
 Demo accounts (done 2026-11-10): both created in the Supabase dashboard
 (Authentication → Users → Add user, **Auto Confirm User** ticked) and seeded
@@ -331,8 +358,10 @@ submission.
 8. **Test on a real device** — tests 1–8 passed 2026-11-10; **test 9 still
    open** (see "What has not been tested").
 9. ~~Pre-flight fixes~~ (EAS production variables, flat RGB icon) — **done
-   2026-11-10**. Then **signing credentials**, **the first build**, TestFlight, the App Store
-   Connect listing, and submit. All in "Pick up here" A–D.
+   2026-11-10**. Then **signing credentials** and **the first build** (**done 2026-11-10**), the
+   App Store Connect app record (**created 2026-11-10**), then TestFlight, the
+   listing content, and submit. Next action is in "Pick up here" → "Resume
+   here".
 
 ---
 
