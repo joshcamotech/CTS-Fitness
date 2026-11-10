@@ -257,7 +257,9 @@ in any order once step 1 is under way.
 - Free tier means Google may use prompts to improve its products — unchanged
   from before, but the privacy policy should reflect it.
 - Gemini 503 "model is currently experiencing high demand" is transient and
-  proves the key authenticated. The function doesn't retry, and failed
+  proves the key authenticated. Since PR #52 the function moves on to the next
+model in its fallback list on 404/429/5xx (see `APP_STORE_SUBMISSION.md`), but
+it never retries the same model, and failed
   attempts count toward the 15/day per-user cap.
 - Unused key(s) in the CamoTech AI Studio deleted 2026-09-25.
 
@@ -271,10 +273,10 @@ the Expo transfer), `mobile/src/constants/legal.ts`, `docs/CNAME` (new),
 `docs/privacy.html`/`terms.html`/`index.html`/`style.css`, `README.md`,
 `APP_STORE_SUBMISSION.md`, `APP_STORE_CONNECT.md`.
 
-Not touched, deliberately: `supabase/migrations/023_moderation_and_account_deletion.sql`
-still has a "GymTracker" string in a user-facing moderation error message —
-that migration is already applied to production, so fixing it needs a *new*
-migration, not an edit to an applied one. Separate task if wanted.
+Not touched at the time: `supabase/migrations/023_moderation_and_account_deletion.sql`
+had a "GymTracker" string in a user-facing moderation error message. It was
+already applied to production, so it was fixed with a *new* migration,
+`025_cts_fitness_branding.sql` (PR #51, applied) rather than an edit.
 `supabase/scripts/seed_demo_account.sql` untouched — demo email addresses
 didn't change.
 
