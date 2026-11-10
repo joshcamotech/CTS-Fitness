@@ -119,6 +119,17 @@ steps above; it does mean a build made now includes it.
   `{{ .Token }}`** (Authentication → Emails → Templates); the default template
   only has a link and the flow cannot work without the code. Re-check the
   template before submitting.
+- **Migration 027 — BLOCKER, found in device testing (test 5 + re-seed):**
+  migration 023 had `content_reports` targets `ON DELETE SET NULL` *and* a
+  CHECK requiring exactly one target id, so deleting reported content (or a
+  reported user's account) aborted with `content_reports_target_matches_type`.
+  That breaks `delete_my_account()` (Guideline 5.1.1(v)) for anyone who has
+  ever been reported, and the demo seed's wipe step. 027 relaxes the CHECK and
+  narrows the one-report-per-reporter index. **Must be applied by hand in the
+  SQL editor before the first build.** Verify with the two queries at the foot
+  of the migration, then prove it: report a seeded post as `demo_friend`, leave
+  the report in place, re-run the seed (should succeed), and test 9 should
+  include deleting an account whose post has been reported.
 
 ### Changed since 2026-09-24
 
@@ -183,7 +194,7 @@ Decisions made 2026-09-21:
 - Moderation backend is **reports table + instant block**, no email alerts and
   no admin screen. Reports are read by querying `content_reports` in the SQL
   editor.
-- Work branches from `origin/main`. **Next free migration number is 027.**
+- Work branches from `origin/main`. **Next free migration number is 028.**
   022 is a permanent gap: it was reserved by the unmerged branch
   `feat/pr-source-location`, whose feature shipped instead as migration 026
   (PR #52). Do not merge that branch — it would collide with the shipped
@@ -229,6 +240,8 @@ submission.
 
 **Outstanding** — see "Next steps, in order" under "Pick up here" above:
 
+6b. **Apply migration 027** (`content_reports` delete fix) in the SQL editor —
+    required, see "Added 2026-11-10 after device testing".
 7. ~~Create the demo accounts~~ — **done 2026-11-10** (see "Next steps" 1).
 8. **Test on a real device** — see "What has not been tested".
 9. **Signing credentials**, then **run the iOS release workflow**, then
