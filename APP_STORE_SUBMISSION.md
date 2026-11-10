@@ -16,11 +16,11 @@ below, then "Current state". Everything in Phases 0–9 is done and merged.**
 over OTA: Expo SDK 58 / RN 0.88, app version 1.2.0, migrations **025, 026 and
 027 applied to production**. Auth email runs through Resend with Confirm email
 ON, forgot-password works (tested on device), demo accounts are created and
-seeded. **No iOS build exists yet** (`eas build:list` empty on 2026-11-10).
+seeded. **The first iOS build finished on 2026-11-10** (EAS build `ed2ac72f-ae8a-4269-b7dc-aef36d0a63d6`: production profile, store distribution, SDK 58, version 1.2.0, build number 2, runtime 1.2.0, built from `main` at `e1cd56b`; ~6 min). It is **not yet submitted to TestFlight** and has not been installed on a phone.
 Device tests 1–8 passed on 2026-11-10; **test 9 (delete account) and the two
 027 proofs are still to do.** A pre-flight check on 2026-11-10 found two things
 to fix before the first build (the EAS production variables and a flat RGB
-icon); **both are fixed** (section A). The build itself is the next step.
+icon); **both are fixed** (section A), and the build in D1 is done. Next is D2 onward: App Store Connect API key, the app record, TestFlight.
 
 Do **not** change `expo.slug` or the EAS `projectId` — the slug is tied to the
 existing EAS project and the project id is what `updates.url` points at.
@@ -107,12 +107,25 @@ configuration).
 
 #### D. Build, test, list, submit
 
-1. **First store build, locally and interactively** (CI cannot do the first
+1. ~~**First store build, locally and interactively**~~ **Done 2026-11-10** (build
+   `ed2ac72f-ae8a-4269-b7dc-aef36d0a63d6`, version 1.2.0, build number 2,
+   from `e1cd56b`; Apple Distribution certificate and provisioning profile
+   created by EAS under the Individual team, **both expire 10 Nov 2027 — renew
+   before then**; credentials are stored under the `camotech` org). Original
+   notes: (CI cannot do the first
    one). Check `npx eas-cli whoami` shows `camotech-solutions`, then from
    `mobile/` on an up-to-date `main`:
    `eas build --profile production --platform ios`. Allow ~30 min. Afterwards
    run `eas credentials -p ios` and add an App Store Connect API key so later
    builds and submits can run from the **iOS release** workflow unattended.
+   **The API-key part is NOT done yet** — see 1b.
+1b. **Add an App Store Connect API key (not done).** In App Store Connect →
+   Users and Access → Integrations → App Store Connect API, create a key (role
+   App Manager or Admin) and download the `.p8` once; then
+   `npx eas-cli credentials -p ios` to upload it (needs the Key ID, Issuer ID
+   and the `.p8`). Keep the `.p8` in a password manager — Apple only offers it
+   once. Optional for a first manual `eas submit` (it can log in with the Apple
+   ID instead), needed for unattended submits from the workflow.
 2. **Check the build** — an `.ipa` exists; watch for an ITMS-91053 email after
    upload (Phase 5). Later builds: Actions → **iOS release** → Run workflow
    (`submit: false` until ready).
@@ -722,7 +735,7 @@ this machine:
   2026-11-10: tests 1–8 below passed, **test 9 has not been run**.
 - ~~The legal pages have not been served~~ — **served and verified 2026-09-22**,
   all three returning 200.
-- **No iOS build has been produced**, so the icon-alpha and privacy-manifest
+- **A build exists (2026-11-10) but has not been inspected or run**, so the icon-alpha and privacy-manifest
   items above are unverified.
 - ~~The demo seed script has never been executed.~~ **Run by Josh on
   2026-11-10** against production, after a static review against migrations
