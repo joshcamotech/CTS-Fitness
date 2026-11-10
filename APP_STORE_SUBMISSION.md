@@ -27,8 +27,8 @@ existing EAS project and the project id is what `updates.url` points at.
 
 Steps 1–3 need no build and can run in parallel. 4–8 are sequential.
 
-1. **Demo accounts — last recorded in progress, 2026-09-26; not re-confirmed
-   since, update this line when done.** Full procedure in
+1. **Demo accounts — NOT done, confirmed by Josh 2026-11-10. This is the
+   next step.** Full procedure in
    `APP_STORE_CONNECT.md` §2. Short version:
    - `demo@camotechsolutions.com.au` and `demo2@camotechsolutions.com.au` must
      be able to **receive email** — sign-up requires confirming the address
@@ -210,7 +210,7 @@ submission.
 
 **Outstanding** — see "Next steps, in order" under "Pick up here" above:
 
-7. **Create the demo accounts** — in progress.
+7. **Create the demo accounts** — not done (confirmed 2026-11-10).
 8. **Test on a real device** — see "What has not been tested".
 9. **Signing credentials**, then **run the iOS release workflow**, then
    TestFlight, the App Store Connect listing, and submit.
