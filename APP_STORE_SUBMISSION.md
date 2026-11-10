@@ -27,21 +27,19 @@ existing EAS project and the project id is what `updates.url` points at.
 
 Steps 1–3 need no build and can run in parallel. 4–8 are sequential.
 
-1. **Demo accounts — NOT done, confirmed by Josh 2026-11-10. This is the
-   next step.** Full procedure in
-   `APP_STORE_CONNECT.md` §2. Short version:
-   - `demo@camotechsolutions.com.au` and `demo2@camotechsolutions.com.au` must
-     be able to **receive email** — sign-up requires confirming the address
-     before the first sign-in. Easiest: add both as aliases on Josh's CamoTech
-     Workspace mailbox before signing up.
-   - Sign both up **in the app** (Expo Go is fine — it uses the same
-     production Supabase project), confirm the emails, set usernames
-     `demo_lifter` / `demo_friend`.
-   - Run `supabase/scripts/seed_demo_account.sql` in the SQL editor.
-     **It has never been run** — expect to iterate; bring any error back to a
-     coding session.
-   - Sign in as `demo_lifter` and check Home, Progress, Workout, feed and
-     Friends all have data. Keep both passwords for the review notes.
+1. ~~**Demo accounts**~~ — **done 2026-11-10.** Both accounts were created in
+   the Supabase dashboard (Authentication → Users → Add user, **Auto Confirm
+   User** ticked, so no email delivery is involved), then
+   `supabase/scripts/seed_demo_account.sql` was run. Both logins work and show
+   the shared feed. Procedure in `APP_STORE_CONNECT.md` §2.
+   - **Re-run the seed immediately before submitting** (and before any
+     resubmission). Every date is relative to the run day, and the Workout
+     screen shows only the current Monday–Sunday week by default, so a stale
+     seed can open onto an empty week. `demo_friend`'s three sessions are
+     deliberately 2, 9 and 16 days before the run, so on that account the
+     history is in the *previous* weeks, not this one.
+   - Keep both passwords in a password manager for the review notes — never
+     in the repo.
 2. **Walk the device test list** in "What has not been tested" (9 steps:
    sign-up terms gate, legal links, content filter, report, block, unblock,
    delete account). The moderation flows are what Guideline 1.2 review
@@ -210,7 +208,7 @@ submission.
 
 **Outstanding** — see "Next steps, in order" under "Pick up here" above:
 
-7. **Create the demo accounts** — not done (confirmed 2026-11-10).
+7. ~~Create the demo accounts~~ — **done 2026-11-10** (see "Next steps" 1).
 8. **Test on a real device** — see "What has not been tested".
 9. **Signing credentials**, then **run the iOS release workflow**, then
    TestFlight, the App Store Connect listing, and submit.
@@ -617,12 +615,11 @@ this machine:
   all three returning 200.
 - **No iOS build has been produced**, so the icon-alpha and privacy-manifest
   items above are unverified.
-- **The demo seed script has never been executed.** Same constraint as
-  migration 023: no local Postgres on this machine. It was reviewed statically,
-  and its strings were checked against the content filter's blocklist by
-  re-implementing `normalize_for_filter()` and the word-boundary match — none
-  of the demo captions, comments or usernames trip it. Expect to iterate on
-  first run anyway.
+- ~~The demo seed script has never been executed.~~ **Run by Josh on
+  2026-11-10** against production, after a static review against migrations
+  001–026 (PR #55 fixed three issues found then). Both demo logins work and the
+  shared feed shows on both. Not re-verified: the Progress, Home trend and
+  PR-chip screens on `demo_lifter`, and the moderation flows (device list below).
 
 Worth walking through on a real device once the migration is applied, in this
 order, since later steps depend on earlier ones:

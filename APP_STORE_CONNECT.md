@@ -120,19 +120,28 @@ features, and a 1.2 rejection follows.
 **Two accounts, not one.** The reviewer needs someone else's content to report
 and block; they cannot demonstrate moderation against their own posts.
 
-1. Sign both up through the app's own sign-up screen — do not hand-insert
-   `auth.users` rows:
+1. Create both accounts in the Supabase dashboard — Authentication → Users →
+   Add user → Create new user, with **Auto Confirm User** ticked. This goes
+   through Supabase Auth, so the user, identity and profile rows are written
+   the normal way, and it needs no email delivery (Supabase's built-in email
+   service is test-only and may not deliver to addresses outside the org). Do
+   not hand-insert `auth.users` rows with SQL:
    - `demo@camotechsolutions.com.au` → `demo_lifter`
    - `demo2@camotechsolutions.com.au` → `demo_friend`
-2. Use a password you are willing to put in the review notes in plain text.
-3. Run `supabase/scripts/seed_demo_account.sql` in the Supabase SQL editor.
+2. Use a unique, strong password you are willing to put in the review notes in
+   plain text. Keep it in a password manager, not the repo.
+3. Run `supabase/scripts/seed_demo_account.sql` in the Supabase SQL editor. It
+   sets the usernames and display names itself.
 
 The seed gives the main account six weeks of training on a four-day split with
 progressive loading (so the 1RM trend, volume chart, muscle-group breakdown and
 PR detection all have real data), an accepted friendship, posts
 from both sides, and comments in both directions. It is idempotent and scoped
-strictly to those two user ids — re-run it to freshen the dates before a
-resubmission.
+strictly to those two user ids (including any block between them, but not
+`content_reports`, which you clear by hand) — **re-run it immediately before
+submitting and before any resubmission** to freshen the dates. The Workout
+screen shows only the current week by default, and `demo_friend`'s sessions are
+2, 9 and 16 days before the run, so a stale seed looks empty.
 
 Put **both** sets of credentials in the review notes.
 
@@ -263,7 +272,8 @@ Screenshot 6 is the cheapest insurance in this whole document.
    accepted (§0). Do this first; it can take days.
 1. Decide the app name (§1). If it changes, update `app.json` **before**
    building — it is a native change.
-2. Create and seed the demo accounts (§2).
+2. Create and seed the demo accounts (§2) — done 2026-11-10; re-seed right
+   before Submit.
 3. Run the **iOS release** workflow with `submit: false`, confirm the build
    succeeds, and check the icon has no alpha channel.
 4. Re-run with `submit: true`, or upload from the EAS dashboard.
