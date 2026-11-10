@@ -10,6 +10,7 @@ import { Feather } from '@expo/vector-icons';
 
 import { ColorTokens } from '../theme/colorways';
 import { useTheme } from '../theme/ThemeContext';
+import { useKeyboardOffset } from '../hooks/useKeyboardOffset';
 import { FONT, RADIUS } from '../constants/theme';
 import { RootStackParamList, Post, PostComment } from '../types';
 import { postsApi } from '../services/social';
@@ -29,6 +30,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { postId } = route.params;
+  const keyboardOffset = useKeyboardOffset();
   const [post,     setPost]     = useState<Post | null>(null);
   const [comments, setComments] = useState<PostComment[]>([]);
   const [loading,  setLoading]  = useState(true);
@@ -129,11 +131,15 @@ export function PostDetailScreen({ route, navigation }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <SafeAreaView
+      onLayout={keyboardOffset.onLayout}
+      style={styles.safe}
+      edges={['bottom']}
+    >
       <KeyboardAvoidingView
         style={styles.flexFill}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={90}
+        keyboardVerticalOffset={keyboardOffset.offset}
       >
         <FlatList
           data={comments}

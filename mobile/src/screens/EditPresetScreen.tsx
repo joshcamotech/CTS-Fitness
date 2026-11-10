@@ -11,6 +11,7 @@ import { Feather } from '@expo/vector-icons';
 
 import { ColorTokens } from '../theme/colorways';
 import { useTheme } from '../theme/ThemeContext';
+import { useKeyboardOffset } from '../hooks/useKeyboardOffset';
 import { FONT, RADIUS } from '../constants/theme';
 import { useFormStyles } from '../constants/formStyles';
 import { EXERCISE_IMAGES } from '../constants/exerciseImages';
@@ -36,6 +37,7 @@ export function EditPresetScreen({ navigation, route }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const formStyles = useFormStyles();
+  const keyboardOffset = useKeyboardOffset();
   const { preset } = route.params;
   const isEditing = !!preset;
 
@@ -130,11 +132,15 @@ export function EditPresetScreen({ navigation, route }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <SafeAreaView
+      onLayout={keyboardOffset.onLayout}
+      style={styles.safe}
+      edges={['bottom']}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={96}
+        keyboardVerticalOffset={keyboardOffset.offset}
       >
         <ScrollView
           style={styles.scroll}
