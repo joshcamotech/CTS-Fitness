@@ -5,48 +5,73 @@ Audited against the [App Store Review Guidelines](https://developer.apple.com/ap
 as published September 2026.
 
 **If you are picking this up in a new session: read "Pick up here" directly
-below, then "Current state". Everything in Phases 0–9 is done and merged.**
+below, then "Current state". Everything in Phases 0-9 is done and merged, and
+the app has been submitted to App Review.**
 
 ---
 
-## Pick up here — as of 2026-11-10 (end of session)
+## Pick up here - as of 2026-11-13
 
-**State in one paragraph.** The account migration is finished
-(`ACCOUNT_MIGRATION.md`). All app code for v1 is merged and live over OTA: Expo
-SDK 58 / RN 0.88, app version 1.2.0, migrations **025, 026 and 027 applied to
-production**. Auth email runs through Resend with Confirm email ON,
-forgot-password works (tested on device), demo accounts are created and
-seeded, and the EAS pre-flight fixes are done. **The first iOS build finished
-on 2026-11-10** (EAS build `ed2ac72f-ae8a-4269-b7dc-aef36d0a63d6`: production
-profile, store distribution, SDK 58, version 1.2.0, build number 2, runtime
-1.2.0, from `main` at `e1cd56b`). **The App Store Connect app record was
-created on 2026-11-10**: name *CTS Fitness*, iOS, primary language English
-(Australia), SKU `ctsfitness-ios`, bundle ID
-`au.com.camotechsolutions.ctsfitness` (now permanently locked), Full Access.
-The build is **not yet submitted to TestFlight** and has not been run on a
-phone. Device tests 1–8 passed; **test 9 and the two 027 proofs are still to
-do.** Work was paused here on 2026-11-10.
+**State in one paragraph.** **CTS Fitness 1.2.0 (build 2) was submitted to App
+Review on 2026-11-13 by Josh.** The build is EAS build
+`ed2ac72f-ae8a-4269-b7dc-aef36d0a63d6` (production profile, SDK 58, runtime
+1.2.0, from `main` at `e1cd56b`, built 2026-11-10), uploaded with `eas submit`,
+processed by Apple and tested by Josh through TestFlight on a real phone. The
+App Store Connect record is *CTS Fitness*, SKU `ctsfitness-ios`, bundle ID
+`au.com.camotechsolutions.ctsfitness` (locked), Apple ID `6832847085`. All
+app code is merged and live over OTA, migrations 025-027 are applied to
+production, and auth email runs through Resend. The listing, privacy label,
+age rating, pricing and review information were entered 2026-11-13: see
+`APP_STORE_CONNECT.md` for exactly what was entered. Nothing is outstanding
+except Apple's verdict.
 
-### Resume here — first action
+### Resume here - waiting on App Review
 
-From `D:\Gym App\mobile` in PowerShell. Josh's PowerShell is the older Windows
-PowerShell 5.1, which rejects `&&`: **run one command per line.**
+1. **Do not change anything Apple reviews while the app is "Waiting for
+   Review" / "In Review"**, other than answering Resolution Center messages.
+   That includes re-seeding the demo accounts: a reviewer may be signed in. The
+   seed dates are relative to the run day (2026-11-13 run), so if review
+   starts days later, `demo_friend`'s history will sit in earlier weeks. That
+   is cosmetic; the feed and friendship are what the reviewer needs.
+2. **Watch the account email** (and App Store Connect -> Distribution -> App
+   Review) for Resolution Center messages. Reply there rather than resubmitting
+   blind; a reply keeps the review slot.
+3. **If rejected**, `APP_STORE_CONNECT.md` -> "If it gets rejected" has the
+   three likely causes (1.2 UGC, 2.1 demo account, 5.1.1(i) privacy) and the
+   replies for them. Re-run `supabase/scripts/seed_demo_account.sql` before any
+   resubmission.
+4. **If approved**, release is set to **automatic** after approval (the App
+   Store Connect default; change it on the version page if that was not
+   intended). Then: re-check the live listing, confirm the App Store build
+   launches, and decide whether to turn on the optional items below.
+5. **Newer builds** go through Actions -> **iOS release** -> Run workflow
+   (`submit: false` until ready). That path needs the App Store Connect API key
+   (step D1b); a manual `npx eas-cli submit --platform ios --profile production
+   --latest` from `D:\Gym App\mobile` also works. Josh's PowerShell is 5.1:
+   **run one command per line**, no `&&`.
 
-```powershell
-git checkout main
-git pull
-npx eas-cli whoami
-npx eas-cli submit --platform ios --profile production --latest
-```
-
-`whoami` must print `camotech-solutions`. `submit` asks for the Apple ID, its
-password and 2FA (Josh enters these; never paste them into chat) and which app
-record to use (*CTS Fitness*). Then follow D2 below.
-
-Do **not** change `expo.slug` or the EAS `projectId` — the slug is tied to the
+Do **not** change `expo.slug` or the EAS `projectId` - the slug is tied to the
 existing EAS project and the project id is what `updates.url` points at.
 
+### Open items that are not blocking
+
+- **App Store Connect API key (D1b)** for unattended submits from CI.
+- **Apple Distribution certificate and provisioning profile (created
+  2026-11-10) expire 10 Nov 2027. Renew before then.**
+- **App Accessibility declaration** was deliberately left blank: claiming
+  VoiceOver, Larger Text and so on without testing them would be a false claim.
+  Test, then declare after launch.
+- **Optional subtitle** (30 characters) was left empty.
+- Parked React Compiler lint findings (18 on 2026-11-10, none from new code):
+  `cd mobile && npm run lint:compiler`, needs a device to verify against.
+- The `ios-release.yml` comment about env vars is slightly misleading now that
+  EAS supplies them (see A1 below). A push touching `.github/workflows` needs
+  the `workflow` token scope.
+
 ### Next steps, in order
+
+All of A-D below is **done**. It is kept as the record of how the submission was
+assembled, so the reasoning is not lost.
 
 #### A. Pre-flight fixes — DONE 2026-11-10
 
@@ -93,7 +118,7 @@ configuration).
    `splash-icon.png` were left alone: they are transparent by design and Apple
    does not check them. Still confirm the icon in the built app (step D2).
 
-#### B. Josh's prerequisites
+#### B. Josh's prerequisites — DONE (the build and submission went through)
 
 - ~~**Node 22.13 or newer**~~ — updated on 2026-11-10 before the first build.
 - Optional: `npm install -g eas-cli` (27.5.0 was available; older works).
@@ -103,7 +128,11 @@ configuration).
   to create the distribution certificate and provisioning profile. Say yes to
   EAS generating and managing credentials (stored under the `camotech` org).
 
-#### C. Finish testing and manual items (before Submit; some before the build)
+#### C. Finish testing and manual items — DONE
+
+Josh confirmed all seven items done on 2026-11-13 (before submitting). The
+results of the 027 proofs and test 9 were not written down; the app was
+submitted afterwards.
 
 1. **Prove migration 027.** As `demo_friend`, report one of `demo_lifter`'s
    posts and leave the report in place, then re-run
@@ -126,7 +155,7 @@ configuration).
    (CI does not deploy it).
 7. **Trademark check** on "CTS Fitness" on the IP Australia register.
 
-#### D. Build, test, list, submit
+#### D. Build, test, list, submit — DONE 2026-11-13
 
 1. ~~**First store build, locally and interactively**~~ **Done 2026-11-10**
    (build `ed2ac72f-ae8a-4269-b7dc-aef36d0a63d6`, version 1.2.0, build number
@@ -137,20 +166,21 @@ configuration).
 1a. ~~**Create the App Store Connect app record**~~ **Done 2026-11-10** (see the
    state paragraph for the exact values). The bundle ID is now locked; the app
    name and everything in the listing can still be edited.
-1b. **Add an App Store Connect API key (not done, optional now).** In App Store
+1b. **Add an App Store Connect API key (not done, optional).** In App Store
    Connect → Users and Access → Integrations → App Store Connect API, create a
    key (role App Manager or Admin) and download the `.p8` once; then
    `npx eas-cli credentials -p ios` to upload it (needs the Key ID, Issuer ID
    and the `.p8`). Keep the `.p8` in a password manager — Apple only offers it
    once. A first manual `eas submit` can log in with the Apple ID instead; the
    key is for unattended submits from the **iOS release** workflow.
-2. **Submit the build to TestFlight — NEXT** (command under "Resume here").
-   Then wait for Apple to process it (usually 10–30 min). Watch the account
+2. ~~**Submit the build to TestFlight**~~ **Done** — `eas submit --platform ios
+   --profile production --latest` worked on 2026-11-13 and Apple processed the
+   build. Then wait for Apple to process it (usually 10–30 min). Watch the account
    email for an **ITMS-91053** note about privacy-manifest reasons (none is
    expected) and for any icon complaint — if either arrives, send it to a
    coding session before going further. Later builds: Actions → **iOS release**
    → Run workflow (`submit: false` until ready).
-3. **TestFlight on a real phone** — install the TestFlight app, accept the
+3. ~~**TestFlight on a real phone**~~ **Done 2026-11-13** (Josh tested the build on his phone via TestFlight) — install the TestFlight app, accept the
    build as an internal tester (Josh, as Account Holder, needs no beta review).
    This is the first standalone build (not Expo Go), so re-check: icon and
    splash, sign-in and sign-up, the confirmation email and its Open CTS
@@ -158,15 +188,18 @@ configuration).
    build), forgot-password, the keyboard bar and comment box, and a normal
    workout end to end. Confirm the app launches at all — that proves the EAS
    production variables reached the build.
-4. **App Store Connect listing content** — the record exists; fill in
+4. ~~**App Store Connect listing content**~~ **Done 2026-11-13** (entered
+   in a Claude in Chrome session; the exact values are recorded in
+   `APP_STORE_CONNECT.md` §8) — the record exists; fill in
    everything in Phase 6 / `APP_STORE_CONNECT.md` (description, keywords,
    screenshots, support and privacy URLs, privacy nutrition label, age rating,
    category, review notes with both demo credentials).
-5. **Finish the open items in section C** (027 proofs, test 9, template,
+5. ~~**Finish the open items in section C**~~ **Done 2026-11-13** (027 proofs, test 9, template,
    redirect URLs, Resend agreement, Edge Function check, trademark).
 6. **Re-run the demo seed immediately before Submit**, and before any
-   resubmission (dates are relative to the run day).
-7. **Submit for review.**
+   resubmission (dates are relative to the run day). Not recorded whether it
+   was re-run on 2026-11-13; re-run it before any resubmission.
+7. ~~**Submit for review.**~~ **Done 2026-11-13** by Josh.
 
 Demo accounts (done 2026-11-10): both created in the Supabase dashboard
 (Authentication → Users → Add user, **Auto Confirm User** ticked) and seeded
@@ -272,7 +305,7 @@ steps above; it does mean a build made now includes it.
 | 3 | Settings: legal links, blocked users, delete account | done |
 | 4 | Report + block UI, sign-up terms gate, AI disclaimer | done |
 | 5 | `app.json` / `eas.json` build + submit config | done |
-| 6 | App Store Connect submission pack | drafted in `APP_STORE_CONNECT.md`; manual entry still to do |
+| 6 | App Store Connect submission pack | done 2026-11-13 — entered in App Store Connect; **submitted to App Review**. Values recorded in `APP_STORE_CONNECT.md` §8 |
 | 7 | CI/CD pipeline | done — merged as PR #37, green on `main` 2026-09-22 |
 | 8 | Move off personal accounts to CamoTech | done — closed out 2026-09-25. Log in `ACCOUNT_MIGRATION.md` |
 | 9 | Pre-submission app changes | done — weight-first set entry + keyboard bar (PRs #44, #45), cardio removed (PR #46, migration 024 applied 2026-09-26) |
@@ -355,13 +388,14 @@ submission.
 6b. ~~Apply migration 027~~ (`content_reports` delete fix) — **applied and
     verified 2026-11-10**; behaviour proofs still open (Pick up here C1, C2).
 7. ~~Create the demo accounts~~ — **done 2026-11-10**.
-8. **Test on a real device** — tests 1–8 passed 2026-11-10; **test 9 still
-   open** (see "What has not been tested").
+8. ~~**Test on a real device**~~ — tests 1–8 passed 2026-11-10; test 9 and
+   the 027 proofs done by Josh before submitting 2026-11-13 (results not
+   written down). See "What has not been tested".
 9. ~~Pre-flight fixes~~ (EAS production variables, flat RGB icon) — **done
    2026-11-10**. Then **signing credentials** and **the first build** (**done 2026-11-10**), the
-   App Store Connect app record (**created 2026-11-10**), then TestFlight, the
-   listing content, and submit. Next action is in "Pick up here" → "Resume
-   here".
+   App Store Connect app record (**created 2026-11-10**), TestFlight, the
+   listing content and the submission (**all done by 2026-11-13**). Next
+   action is in "Pick up here" → "Resume here": wait for App Review.
 
 ---
 
@@ -592,20 +626,21 @@ makes the post itself unreadable, so it pops back to the feed.
 - [x] `eas.json` — `production` build profile with `distribution: "store"` and
       `autoIncrement: true`; a `preview` profile for internal builds; a named
       `submit.production` profile
-- [ ] **Manual:** run the **iOS release** workflow (Actions → iOS release →
-      Run workflow). It runs the same gate a PR does, then
-      `eas build --platform ios --profile production`. Run it with
+- [x] **Manual:** first build made locally and interactively instead (2026-11-10,
+      `eas build --profile production --platform ios`, because signing
+      credentials needed an Apple ID prompt). The **iOS release** workflow
+      (Actions → iOS release → Run workflow) is for later builds; run it with
       `submit: false` first.
-- [ ] **Manual:** upload App Store Connect credentials to EAS once, with
+- [ ] **Manual (optional):** upload App Store Connect credentials to EAS once, with
       `eas credentials`, so the workflow's submit step can run
       non-interactively. Until then, submit from the EAS dashboard by hand.
       The submit profile in `eas.json` stays empty rather than carrying
       guessed Apple ID / team ID values.
-- [ ] **Manual: verify the built IPA's app icon has no alpha channel.** All four
+- [x] **Manual: verify the built IPA's app icon has no alpha channel** — icon.png was re-saved as RGB (2026-11-10) and the build uploaded and processed with no icon complaint. Original note: All four
       PNGs in `mobile/assets/` are RGBA (colour type 6). Expo normally flattens
       the iOS icon during prebuild, but Apple rejects icons with transparency,
       so confirm it in the actual build rather than assuming.
-- [ ] **Manual:** after the first upload, watch for an ITMS-91053 email about
+- [x] **Manual:** (no email reported by Josh, 2026-11-13) after the first upload, watch for an ITMS-91053 email about
       missing privacy-manifest reasons. The app's own code calls no
       required-reason APIs directly, and async-storage ships its own manifest,
       so none is expected — but confirm rather than assume.
@@ -620,9 +655,10 @@ changes need a fresh `eas build`.
 
 ---
 
-## Phase 6 — App Store Connect (drafted)
+## Phase 6 — App Store Connect (done 2026-11-13)
 
-Not code. Do this after a build is uploaded.
+Not code. Entered after the build was uploaded; the exact values are in
+`APP_STORE_CONNECT.md` §8.
 
 **Written up in full in `APP_STORE_CONNECT.md`** — the name collision check,
 the demo-account procedure, copy-paste review notes, the nutrition label, the
@@ -632,15 +668,15 @@ summary below stays here so this checklist reads end to end.
 - [x] **App name** — **decided: "CTS Fitness"**, 2026-09-24. "GymTracker" was
       confirmed taken (iTunes Search API, 2026-09-22). "CTS Fitness" checked
       clear the same way on 2026-09-24 — see `APP_STORE_CONNECT.md` §1. Trade
-      mark register check still outstanding, do before submitting.
-- [ ] **Demo account** (2.1) — the app is login-gated, so review *will* fail
+      mark register check done by Josh before submitting.
+- [x] **Demo account** (2.1) — the app is login-gated, so review *will* fail
       without working credentials in the review notes. **Two** accounts: the
       reviewer needs someone else's content to report and block. Sign both up
       through the app, then run `supabase/scripts/seed_demo_account.sql`,
       which fills six weeks of progressive training, an
       accepted friendship, posts from both sides and comments in both
       directions. Idempotent and scoped to the two demo users.
-- [ ] **Notes for Review** (2.3.1(a)) — describe the AI generator and the social
+- [x] **Notes for Review** (2.3.1(a)) — describe the AI generator and the social
       features *specifically*; generic descriptions get rejected. State where
       Report and Block live, because a reviewer who cannot find them will reject
       under 1.2. Suggested wording:
@@ -653,12 +689,12 @@ summary below stays here so this checklist reads end to end.
   > last 30 days of training to Google's Gemini API to generate a suggestion;
   > this is disclosed on that screen and in the privacy policy.
 
-- [ ] **Privacy nutrition label** — email address, user content, health &
+- [x] **Privacy nutrition label** — email address, user content, health &
       fitness, identifiers. Linked to identity; **not** used for tracking.
-- [ ] **Age rating** — answer honestly; the UGC and social features drive this.
-- [ ] Category: Health & Fitness
-- [ ] Screenshots for every required device size
-- [ ] Privacy policy URL and support URL from Phase 1
+- [x] **Age rating** (13+) — answer honestly; the UGC and social features drive this.
+- [x] Category: Health & Fitness
+- [x] Screenshots (six, iPhone 6.1"/6.3" set at 1206×2622; Apple scales them to other sizes)
+- [x] Privacy policy URL and support URL from Phase 1
 
 ---
 
@@ -761,11 +797,14 @@ this machine:
   in this repo, which is the honest gap. Josh has exercised the app on an
   iPhone via Expo Go (the weight/reps entry and keyboard bar were checked
   there on 2026-09-26). The Phase 3/4 moderation UI was walked through on
-  2026-11-10: tests 1–8 below passed, **test 9 has not been run**.
+  2026-11-10: tests 1–8 below passed, and test 9 was done before submission.
 - ~~The legal pages have not been served~~ — **served and verified 2026-09-22**,
   all three returning 200.
-- **A build exists (2026-11-10) but has not been inspected or run**, so the icon-alpha and privacy-manifest
-  items above are unverified.
+- **The first standalone build was installed and used through TestFlight by
+  Josh (2026-11-13)** and was uploaded without any reported icon or
+  privacy-manifest complaint. The standalone-only paths (the `ctsfitness://`
+  confirmation link, forgot-password, the keyboard bar) were part of that test;
+  the detailed results were not written down.
 - ~~The demo seed script has never been executed.~~ **Run by Josh on
   2026-11-10** against production, after a static review against migrations
   001–026 (PR #55 fixed three issues found then). Both demo logins work and the
@@ -773,7 +812,9 @@ this machine:
   PR-chip screens on `demo_lifter`, and the moderation flows (device list below).
 
 Device test list, in this order since later steps depend on earlier ones.
-**Results 2026-11-10 (Expo Go, real iPhone): 1–8 PASSED; 9 NOT RUN.**
+**Results 2026-11-10 (Expo Go, real iPhone): 1–8 PASSED. Test 9 and the two
+027 proofs were done by Josh before submitting (2026-11-13); results not
+written down.**
 Note the order for 7 and 8: do **8 before 7**, because the block must still be
 active to prove a blocked user cannot find you. Use `demo@` / `demo2@` for 5–8
 (re-run the seed afterwards to restore the friendship and clear any block, after

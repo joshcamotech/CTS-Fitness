@@ -46,3 +46,6 @@ android/
 
 # Migration exports (personal data)
 migration/data/
+
+# App Store screenshots (upload assets, not source)
+store-screenshots/
