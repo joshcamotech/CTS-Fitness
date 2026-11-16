@@ -6,14 +6,25 @@ as published September 2026.
 
 **If you are picking this up in a new session: read "Pick up here" directly
 below, then "Current state". Everything in Phases 0-9 is done and merged, and
-the app has been submitted to App Review.**
+the app is LIVE on the App Store.**
 
 ---
 
-## Pick up here - as of 2026-11-13
+## Pick up here - as of 2026-11-16
+
+**CTS Fitness 1.2.0 is live on the App Store.** App Review approved it on
+2026-11-14 (Apple's approval email, Sat 14 Nov 09:26 local); the version shows
+*Ready for Distribution* with automatic release. On 2026-11-16 the iTunes
+Lookup API returned it for the `au` and `us` storefronts and it was the first
+result searching "CTS Fitness" in `au`.
+
+- **Store page:** https://apps.apple.com/au/app/cts-fitness/id6832847085
+- Apple's "up to 24 hours" is a worst case; device search can lag the direct
+  link. Test the public build from the link, with the TestFlight copy deleted
+  first, because TestFlight shows "Open" instead of "Get".
 
 **State in one paragraph.** **CTS Fitness 1.2.0 (build 2) was submitted to App
-Review on 2026-11-13 by Josh.** The build is EAS build
+Review on 2026-11-13 by Josh and approved 2026-11-14.** The build is EAS build
 `ed2ac72f-ae8a-4269-b7dc-aef36d0a63d6` (production profile, SDK 58, runtime
 1.2.0, from `main` at `e1cd56b`, built 2026-11-10), uploaded with `eas submit`,
 processed by Apple and tested by Josh through TestFlight on a real phone. The
@@ -22,33 +33,34 @@ App Store Connect record is *CTS Fitness*, SKU `ctsfitness-ios`, bundle ID
 app code is merged and live over OTA, migrations 025-027 are applied to
 production, and auth email runs through Resend. The listing, privacy label,
 age rating, pricing and review information were entered 2026-11-13: see
-`APP_STORE_CONNECT.md` for exactly what was entered. Nothing is outstanding
-except Apple's verdict.
+`APP_STORE_CONNECT.md` for exactly what was entered. Nothing in the
+submission is outstanding; the list below is post-launch housekeeping.
 
-### Resume here - waiting on App Review
+### Resume here - the app is live; what to do now
 
-1. **Do not change anything Apple reviews while the app is "Waiting for
-   Review" / "In Review"**, other than answering Resolution Center messages.
-   That includes re-seeding the demo accounts: a reviewer may be signed in. The
-   seed dates are relative to the run day (2026-11-13 run), so if review
-   starts days later, `demo_friend`'s history will sit in earlier weeks. That
-   is cosmetic; the feed and friendship are what the reviewer needs.
-2. **Watch the account email** (and App Store Connect -> Distribution -> App
-   Review) for Resolution Center messages. Reply there rather than resubmitting
-   blind; a reply keeps the review slot.
-3. **If rejected**, `APP_STORE_CONNECT.md` -> "If it gets rejected" has the
-   three likely causes (1.2 UGC, 2.1 demo account, 5.1.1(i) privacy) and the
-   replies for them. Re-run `supabase/scripts/seed_demo_account.sql` before any
-   resubmission.
-4. **If approved**, release is set to **automatic** after approval (the App
-   Store Connect default; change it on the version page if that was not
-   intended). Then: re-check the live listing, confirm the App Store build
-   launches, and decide whether to turn on the optional items below.
-5. **Newer builds** go through Actions -> **iOS release** -> Run workflow
-   (`submit: false` until ready). That path needs the App Store Connect API key
-   (step D1b); a manual `npx eas-cli submit --platform ios --profile production
-   --latest` from `D:\Gym App\mobile` also works. Josh's PowerShell is 5.1:
-   **run one command per line**, no `&&`.
+1. **Install the public build from the store link** on a phone with no
+   TestFlight copy, and check it launches, sign-in works, the confirmation
+   email's Open button works (`ctsfitness://`), forgot-password works, and a
+   normal workout saves. A launch crash would mean the EAS `production`
+   variables are missing.
+2. **Change both demo account passwords** (Supabase -> Authentication -> Users).
+   Review is over, they are real accounts on the production database, and the
+   old passwords were pasted into a chat session on 2026-11-16. Store the new
+   ones in a password manager. Update the review notes and Password field in
+   App Store Connect when the next version is submitted. Keep the accounts: a
+   later review or a rejection reply will need them.
+3. **Re-run the demo seed before the next submission**, not before: the dates
+   are relative to the run day.
+4. **OTA vs new build.** JS-only changes ship over the air from `main`
+   (`eas-update.yml`, runtime 1.2.0). Anything native or in `app.json` needs a
+   new build and a new App Store version: Actions -> **iOS release** -> Run
+   workflow (`submit: false` until ready), or `npx eas-cli build` / `submit`
+   locally. Josh's PowerShell is 5.1: **run one command per line**, no `&&`.
+5. **If Apple sends a Resolution Center message later**, reply there;
+   `APP_STORE_CONNECT.md` -> "If it gets rejected" has the likely causes.
+6. Report-handling is manual and promised within 24 hours in the Terms:
+   check `content_reports` (see Phase 2 -> "Reviewing reports"). Now that real
+   users can reach the app, this is a live commitment.
 
 Do **not** change `expo.slug` or the EAS `projectId` - the slug is tied to the
 existing EAS project and the project id is what `updates.url` points at.
@@ -199,7 +211,7 @@ submitted afterwards.
 6. **Re-run the demo seed immediately before Submit**, and before any
    resubmission (dates are relative to the run day). Not recorded whether it
    was re-run on 2026-11-13; re-run it before any resubmission.
-7. ~~**Submit for review.**~~ **Done 2026-11-13** by Josh.
+7. ~~**Submit for review.**~~ **Done 2026-11-13** by Josh. **Approved 2026-11-14; live.**
 
 Demo accounts (done 2026-11-10): both created in the Supabase dashboard
 (Authentication → Users → Add user, **Auto Confirm User** ticked) and seeded
@@ -305,7 +317,7 @@ steps above; it does mean a build made now includes it.
 | 3 | Settings: legal links, blocked users, delete account | done |
 | 4 | Report + block UI, sign-up terms gate, AI disclaimer | done |
 | 5 | `app.json` / `eas.json` build + submit config | done |
-| 6 | App Store Connect submission pack | done 2026-11-13 — entered in App Store Connect; **submitted to App Review**. Values recorded in `APP_STORE_CONNECT.md` §8 |
+| 6 | App Store Connect submission pack | done 2026-11-13 — entered and submitted; **approved 2026-11-14, live on the App Store** (checked 2026-11-16). Values recorded in `APP_STORE_CONNECT.md` §8 |
 | 7 | CI/CD pipeline | done — merged as PR #37, green on `main` 2026-09-22 |
 | 8 | Move off personal accounts to CamoTech | done — closed out 2026-09-25. Log in `ACCOUNT_MIGRATION.md` |
 | 9 | Pre-submission app changes | done — weight-first set entry + keyboard bar (PRs #44, #45), cardio removed (PR #46, migration 024 applied 2026-09-26) |
@@ -394,8 +406,8 @@ submission.
 9. ~~Pre-flight fixes~~ (EAS production variables, flat RGB icon) — **done
    2026-11-10**. Then **signing credentials** and **the first build** (**done 2026-11-10**), the
    App Store Connect app record (**created 2026-11-10**), TestFlight, the
-   listing content and the submission (**all done by 2026-11-13**). Next
-   action is in "Pick up here" → "Resume here": wait for App Review.
+   listing content and the submission (**all done by 2026-11-13**). Approved
+   2026-11-14 and live. See "Pick up here" → "Resume here".
 
 ---
 

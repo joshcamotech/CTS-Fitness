@@ -26,7 +26,8 @@ and the code change is merged (PR #40). Supabase, Expo and Gemini handled
 - **Next:** this doc is closed. Submission work continues in
   `APP_STORE_SUBMISSION.md` → "Pick up here". As of 2026-11-13 the first iOS
   build (2026-11-10) has been through TestFlight and **CTS Fitness 1.2.0
-  (build 2) has been submitted to App Review**. The signing credentials EAS
+  (build 2) was submitted to App Review and approved 2026-11-14; it is live on
+  the App Store**. The signing credentials EAS
   created live under the `camotech` org.
 - **Build from an up-to-date `main`**, not an older branch — branches cut
   before PR #42 still have `"owner": "joshcammo"` in `app.json`. Re-run
@@ -95,7 +96,8 @@ Where each piece lives today, and what moving it costs.
 | Gemini API key | personal Google | **stays personal, on purpose** — see step 6 | — | no |
 | Domain, support email | already CamoTech | — | — | — |
 
-**Next action: wait for App Review** — the app was submitted 2026-11-13. See
+**Next action: none required** — the app was submitted 2026-11-13, approved
+2026-11-14 and is live. See
 `APP_STORE_SUBMISSION.md` → "Pick up here". (The first build, TestFlight and
 the listing are all done; the EAS `production` environment holds the two
 `EXPO_PUBLIC_SUPABASE_*` variables cloud builds need.)

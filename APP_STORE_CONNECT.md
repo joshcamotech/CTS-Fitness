@@ -6,8 +6,9 @@ decided once rather than improvised in the submission form at 11pm.
 Companion to `APP_STORE_SUBMISSION.md`, which tracks the code work. This file
 is Phase 6. Nothing here is code; all of it is manual.
 
-**Status 2026-11-13: everything here has been entered and the app has been
-submitted to App Review.** §8 records exactly what was entered, for use if a
+**Status 2026-11-16: everything here was entered 2026-11-13, the app was
+submitted that day, approved 2026-11-14, and is live at
+https://apps.apple.com/au/app/cts-fitness/id6832847085.** §8 records exactly what was entered, for use if a
 resubmission or a Resolution Center reply is needed. §1–§7 are the plan it
 was entered from.
 
@@ -303,7 +304,8 @@ Screenshot 6 is the cheapest insurance in this whole document.
 7. Walk the device test list in `APP_STORE_SUBMISSION.md` → "What has not been
    tested" before hitting Submit. Tests 1–8 passed 2026-11-10; test 9 and the
    027 proofs were done before submitting 2026-11-13.
-8. **Submitted for review 2026-11-13.** What was entered is in §8.
+8. **Submitted for review 2026-11-13; approved 2026-11-14; live.** What was
+   entered is in §8.
 
 ---
 
